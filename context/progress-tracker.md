@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Phase 1: Design system foundation complete
+- Phase 2: Editor shell foundation complete
 
 ## Current Goal
 
-- Move from the design system foundation into the next UI feature unit.
+- Move from the editor shell foundation into the next scoped workspace feature.
 
 ## Completed
 
@@ -18,6 +18,10 @@ Update this file whenever the current phase, active feature, or implementation s
 - `lucide-react` installed.
 - `lib/utils.ts` added with reusable `cn()` helper.
 - Dark-only theme tokens defined in `app/globals.css` and exercised in the app shell.
+- Shared editor navbar implemented with left, center, and right sections plus sidebar toggle state.
+- Floating project sidebar implemented with overlay behavior, slide-in transition, tabs, empty states, and bottom action button.
+- Reusable dialog frame pattern added for future editor dialogs using the shared color token system.
+- The app landing route now previews the editor shell foundation instead of the design system demo.
 
 ## In Progress
 
@@ -25,7 +29,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Start the next scoped UI or workspace feature using the installed primitives and shared token system.
+- Start the next editor chapter on top of the shared navbar, sidebar, and dialog surface foundation.
 
 ## Open Questions
 
@@ -37,4 +41,5 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
-- The landing page now acts as a live design system preview and imports every required primitive.
+- The landing page now acts as an editor workspace shell preview with a floating overlay sidebar.
+- Production build verification required network access because the existing root layout fetches Geist fonts with `next/font/google`.
