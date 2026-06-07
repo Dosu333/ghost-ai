@@ -33,14 +33,14 @@ Define public routes using the existing sign-in and sign-up env vars. Protect ev
 
 Update `/`:
 
-- authenticated isers redirect to `/ediitor`
+- authenticated users redirect to `/editor`
 - unauthenticated users redirect to `/sign-in`
 
 Add Clerk's built-in `UserButton` to the editor navbar right section for profile settings and logout.
 
 Keep Clerk's default user menu and profile flows intact. Do not rebuild or heavily customize Clerk internals.
 
-Use existinig Clerk env vars. Do not rename or invent new ones.
+Use existing Clerk env vars. Do not rename or invent new ones.
 
 
 ## Dependencies
@@ -54,4 +54,4 @@ install: @clerk/ui
 - all routes are protected except public auth paths
 - auth pages use CSS variables with no hardcoded colors.
 - `ClerkProvider` wraps the root layout
-- `npm run build` passe
+- `npm run build` passes

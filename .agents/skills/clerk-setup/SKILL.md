@@ -23,7 +23,7 @@ The `clerk` CLI replaces most Dashboard clicks. Three scenarios cover almost eve
 ### Scenario A — New project, new Clerk app
 
 ```bash
-clerk init --framework <next|react|vue|nuxt|astro|react-router|tanstack-react-start|expressjs|fastify|expo> -y
+clerk init --framework <next|astro|nuxt|tanstack-start|react-router|vue|expo|react|javascript|js|express|fastify> -y
 ```
 
 `clerk init` creates the Clerk app via PLAPI, links the project, writes the framework-specific publishable + secret keys to the right env file (e.g. `.env.local` for Next.js, `.env` for Vite-based projects), and installs the SDK package.

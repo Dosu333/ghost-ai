@@ -22,7 +22,7 @@ export function EditorWorkspaceShell() {
             appearance={{
               elements: {
                 avatarBox:
-                  "size-9 rounded-xl ring-1 ring-[var(--border-default)]",
+                  "size-9 rounded-xl ring-1 ring-(var(--border-default))",
                 userButtonTrigger:
                   "rounded-xl border border-surface-border bg-elevated/80 p-1 transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none",
               },
