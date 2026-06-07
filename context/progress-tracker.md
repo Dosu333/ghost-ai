@@ -33,6 +33,9 @@ Update this file whenever the current phase, active feature, or implementation s
 - Owner-only sidebar actions now open wired rename and delete dialogs.
 - Create, rename, and delete project dialogs are implemented with a dedicated state hook, live slug preview, rename autofocus, Enter-to-submit, and destructive delete confirmation.
 - Mobile sidebar interaction now includes a backdrop scrim and outside-tap close behavior.
+- Prisma foundation is implemented with folder-based schema models for `Project` and `ProjectCollaborator`, including the required status enum, relations, unique constraints, and indexes.
+- `lib/prisma.ts` now exports a cached Prisma singleton that switches between Prisma Accelerate for `prisma+postgres://` URLs and `@prisma/adapter-pg` for direct PostgreSQL URLs.
+- The first Prisma migration SQL was generated locally at `prisma/migrations/20260608003036_init_project_data/migration.sql`, and Prisma Client generation now targets the standard `@prisma/client` output.
 
 ## In Progress
 
@@ -44,7 +47,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Open Questions
 
-- Add unresolved product or implementation questions here.
+- Applying the initial Prisma migration to the configured remote PostgreSQL database still requires explicit approval because it mutates an external datasource.
 
 ## Architecture Decisions
 
@@ -57,3 +60,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - Authentication is enforced via `proxy.ts`, matching the Next.js 16 proxy file convention rather than deprecated `middleware.ts`.
 - Auth verification completed with a successful `npm run build` after allowing network access for the existing Google font fetch.
 - Project dialog flows are currently mock-only and mutate local client state without API calls or persistence, matching the current feature spec scope.
+- Prisma schema validation and client generation succeeded after adding `@prisma/extension-accelerate` for the Accelerate code path.
+- `prisma migrate dev` was not applied to the configured remote database because explicit approval is still needed before mutating that external datasource.

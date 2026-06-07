@@ -13,7 +13,7 @@ function slugifyProjectName(name: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
 
-  return slug || "project-slug"
+  return slug || `project-slug-${Date.now()}`
 }
 
 function wait(delayMs: number) {
