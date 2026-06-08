@@ -3,7 +3,6 @@
 import { Trash2 } from "lucide-react"
 
 import { EditorDialogFrame } from "@/components/editor/editor-dialog-frame"
-import type { MockProject } from "@/components/editor/project-data"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -12,13 +11,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import type { EditorProject } from "@/types/projects"
 
 interface ProjectDialogsProps {
   activeDialog: "create" | "rename" | "delete" | null
   isSubmitting: boolean
   projectName: string
-  selectedProject: MockProject | null
-  slugPreview: string
+  selectedProject: EditorProject | null
+  roomIdPreview: string
   onClose: () => void
   onProjectNameChange: (value: string) => void
   onCreateSubmit: () => Promise<void>
@@ -31,7 +31,7 @@ export function ProjectDialogs({
   isSubmitting,
   projectName,
   selectedProject,
-  slugPreview,
+  roomIdPreview,
   onClose,
   onProjectNameChange,
   onCreateSubmit,
@@ -53,7 +53,7 @@ export function ProjectDialogs({
         >
           <DialogTitle className="sr-only">Create Project</DialogTitle>
           <DialogDescription className="sr-only">
-            Create a new project and review its slug preview.
+            Create a new project and review its room ID preview.
           </DialogDescription>
           <form
             onSubmit={(event) => {
@@ -63,7 +63,7 @@ export function ProjectDialogs({
           >
             <EditorDialogFrame
               title="Create Project"
-              description="Start a new architecture workspace and review the generated slug as you type."
+              description="Start a new architecture workspace and review the generated room ID as you type."
               footer={
                 <>
                   <Button
@@ -78,7 +78,7 @@ export function ProjectDialogs({
                   <Button
                     type="submit"
                     className="rounded-xl"
-                    disabled={isSubmitting || !projectName.trim()}
+                    disabled={isSubmitting}
                   >
                     {isSubmitting ? "Creating..." : "Create Project"}
                   </Button>
@@ -104,10 +104,10 @@ export function ProjectDialogs({
 
                 <div className="rounded-2xl border border-surface-border bg-surface/70 px-4 py-3">
                   <div className="text-xs uppercase tracking-[0.18em] text-copy-faint">
-                    Slug preview
+                    Room ID preview
                   </div>
                   <div className="mt-2 font-mono text-sm text-brand">
-                    {slugPreview}
+                    {roomIdPreview}
                   </div>
                 </div>
               </div>

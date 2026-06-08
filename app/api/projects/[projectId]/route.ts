@@ -37,6 +37,18 @@ export async function PATCH(
     return bodyResult.response
   }
 
+  if (!bodyResult.name) {
+    return Response.json(
+      {
+        error: {
+          code: "INVALID_NAME",
+          message: "Project name is required.",
+        },
+      },
+      { status: 400 }
+    )
+  }
+
   const project = await prisma.project.update({
     where: { id: projectId },
     data: {

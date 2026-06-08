@@ -12,11 +12,56 @@ interface ApiErrorBody {
 }
 
 interface ProjectBodyInput {
+  id?: unknown
   name?: unknown
 }
 
 interface ParseProjectBodyOptions {
   defaultName?: string
+  allowId?: boolean
+}
+
+interface ParsedProjectBody {
+  id: string | null
+  name: string | null
+  response: Response | null
+}
+
+const PROJECT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+function parseOptionalProjectId(id: unknown) {
+  if (id === undefined) {
+    return { id: null, response: null }
+  }
+
+  if (typeof id !== "string") {
+    return {
+      id: null,
+      response: jsonError(400, "INVALID_ID", "Project ID must be a string."),
+    }
+  }
+
+  const normalizedId = id.trim()
+
+  if (!normalizedId) {
+    return {
+      id: null,
+      response: jsonError(400, "INVALID_ID", "Project ID cannot be empty."),
+    }
+  }
+
+  if (!PROJECT_ID_PATTERN.test(normalizedId)) {
+    return {
+      id: null,
+      response: jsonError(
+        400,
+        "INVALID_ID",
+        "Project ID must use lowercase letters, numbers, and hyphens."
+      ),
+    }
+  }
+
+  return { id: normalizedId, response: null }
 }
 
 export function jsonError(
@@ -50,24 +95,38 @@ export async function requireAuthenticatedUser() {
 export async function parseProjectBody(
   request: Request,
   options: ParseProjectBodyOptions = {}
-) {
+): Promise<ParsedProjectBody> {
   let body: ProjectBodyInput
 
   try {
     body = (await request.json()) as ProjectBodyInput
   } catch {
     return {
+      id: null,
       name: null,
       response: jsonError(400, "INVALID_JSON", "Request body must be valid JSON."),
     }
   }
 
+  const idResult = options.allowId
+    ? parseOptionalProjectId(body.id)
+    : { id: null, response: null }
+
+  if (idResult.response) {
+    return {
+      id: null,
+      name: null,
+      response: idResult.response,
+    }
+  }
+
   if (body.name === undefined) {
     if (options.defaultName) {
-      return { name: options.defaultName, response: null }
+      return { id: idResult.id, name: options.defaultName, response: null }
     }
 
     return {
+      id: idResult.id,
       name: null,
       response: jsonError(400, "MISSING_NAME", "Project name is required."),
     }
@@ -75,6 +134,7 @@ export async function parseProjectBody(
 
   if (typeof body.name !== "string") {
     return {
+      id: idResult.id,
       name: null,
       response: jsonError(400, "INVALID_NAME", "Project name must be a string."),
     }
@@ -84,6 +144,7 @@ export async function parseProjectBody(
 
   if (normalizedName.length === 0) {
     return {
+      id: idResult.id,
       name: null,
       response: jsonError(
         400,
@@ -93,7 +154,7 @@ export async function parseProjectBody(
     }
   }
 
-  return { name: normalizedName, response: null }
+  return { id: idResult.id, name: normalizedName, response: null }
 }
 
 export { DEFAULT_PROJECT_NAME }

@@ -1,16 +1,27 @@
 "use client"
 
 import { UserButton } from "@clerk/nextjs"
-import { useState } from "react"
 import { Plus } from "lucide-react"
+import { useState } from "react"
 
 import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { ProjectDialogs } from "@/components/editor/project-dialogs"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
-import { useProjectDialogs } from "@/components/editor/use-project-dialogs"
 import { Button } from "@/components/ui/button"
+import { useProjectActions } from "@/hooks/use-project-actions"
+import type { EditorProject } from "@/types/projects"
 
-export function EditorWorkspaceShell() {
+interface EditorWorkspaceShellProps {
+  activeProject?: EditorProject
+  ownedProjects: EditorProject[]
+  sharedProjects: EditorProject[]
+}
+
+export function EditorWorkspaceShell({
+  activeProject,
+  ownedProjects,
+  sharedProjects,
+}: EditorWorkspaceShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const {
     activeDialog,
@@ -19,16 +30,16 @@ export function EditorWorkspaceShell() {
     openCreateDialog,
     openDeleteDialog,
     openRenameDialog,
-    ownedProjects,
     projectName,
+    roomIdPreview,
     selectedProject,
     setProjectName,
-    sharedProjects,
-    slugPreview,
     submitCreateProject,
     submitDeleteProject,
     submitRenameProject,
-  } = useProjectDialogs()
+  } = useProjectActions({
+    activeProjectId: activeProject?.id ?? null,
+  })
 
   return (
     <main className="min-h-screen bg-base text-copy-primary">
@@ -50,6 +61,7 @@ export function EditorWorkspaceShell() {
       />
 
       <ProjectSidebar
+        activeProjectId={activeProject?.id}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         ownedProjects={ownedProjects}
@@ -64,13 +76,29 @@ export function EditorWorkspaceShell() {
 
         <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
           <section className="flex w-full max-w-2xl flex-col items-center text-center">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Create a project or open an existing one
-            </h1>
-            <p className="mt-4 max-w-xl text-base leading-7 text-copy-secondary">
-              Start a new architecture workspace, or choose a project from the
-              sidebar.
-            </p>
+            {activeProject ? (
+              <>
+                <div className="rounded-full border border-brand/30 bg-accent-dim px-4 py-2 font-mono text-xs uppercase tracking-[0.2em] text-brand">
+                  Room ID {activeProject.id}
+                </div>
+                <h1 className="mt-6 text-3xl font-semibold tracking-tight sm:text-4xl">
+                  {activeProject.name}
+                </h1>
+                <p className="mt-4 max-w-xl text-base leading-7 text-copy-secondary">
+                  This workspace route is now live and ready for the canvas step.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                  Create a project or open an existing one
+                </h1>
+                <p className="mt-4 max-w-xl text-base leading-7 text-copy-secondary">
+                  Start a new architecture workspace, or choose a project from
+                  the sidebar.
+                </p>
+              </>
+            )}
             <Button className="mt-8 rounded-xl px-5" onClick={openCreateDialog}>
               <Plus className="h-4 w-4" />
               New Project
@@ -84,7 +112,7 @@ export function EditorWorkspaceShell() {
         isSubmitting={isSubmitting}
         projectName={projectName}
         selectedProject={selectedProject}
-        slugPreview={slugPreview}
+        roomIdPreview={roomIdPreview}
         onClose={closeDialog}
         onProjectNameChange={setProjectName}
         onCreateSubmit={submitCreateProject}

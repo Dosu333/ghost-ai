@@ -42,6 +42,7 @@ export async function POST(request: Request) {
   }
 
   const bodyResult = await parseProjectBody(request, {
+    allowId: true,
     defaultName: DEFAULT_PROJECT_NAME,
   })
 
@@ -49,8 +50,21 @@ export async function POST(request: Request) {
     return bodyResult.response
   }
 
+  if (!bodyResult.name) {
+    return Response.json(
+      {
+        error: {
+          code: "INVALID_NAME",
+          message: "Project name is required.",
+        },
+      },
+      { status: 400 }
+    )
+  }
+
   const project = await prisma.project.create({
     data: {
+      ...(bodyResult.id ? { id: bodyResult.id } : {}),
       ownerId: authResult.userId,
       name: bodyResult.name,
     },

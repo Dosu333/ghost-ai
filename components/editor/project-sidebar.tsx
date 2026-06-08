@@ -1,20 +1,22 @@
 "use client"
 
+import Link from "next/link"
 import { Pencil, Plus, Trash2, X } from "lucide-react"
 
-import type { MockProject } from "@/components/editor/project-data"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
+import type { EditorProject } from "@/types/projects"
 
 interface ProjectSidebarProps {
+  activeProjectId?: string
   isOpen: boolean
   onClose: () => void
-  ownedProjects: MockProject[]
-  sharedProjects: MockProject[]
+  ownedProjects: EditorProject[]
+  sharedProjects: EditorProject[]
   onCreateProject: () => void
-  onRenameProject: (project: MockProject) => void
-  onDeleteProject: (project: MockProject) => void
+  onRenameProject: (project: EditorProject) => void
+  onDeleteProject: (project: EditorProject) => void
 }
 
 const projectTabs = [
@@ -22,17 +24,18 @@ const projectTabs = [
     value: "my-projects",
     label: "My Projects",
     title: "No projects yet",
-    description: "Your owned projects will appear here once the project flow is connected.",
+    description: "Create a project to start a new architecture workspace.",
   },
   {
     value: "shared",
     label: "Shared",
     title: "Nothing shared yet",
-    description: "Projects shared with you will show up in this tab when collaboration is wired in.",
+    description: "Projects shared with you will appear here.",
   },
 ]
 
 export function ProjectSidebar({
+  activeProjectId,
   isOpen,
   onClose,
   ownedProjects,
@@ -67,7 +70,7 @@ export function ProjectSidebar({
             <div>
               <h2 className="text-lg font-semibold text-copy-primary">Projects</h2>
               <p className="text-sm text-copy-muted">
-                Create, rename, or remove your mock workspaces.
+                Create, open, rename, or remove your workspaces.
               </p>
             </div>
 
@@ -96,8 +99,10 @@ export function ProjectSidebar({
 
             <TabsContent value="my-projects" className="mt-4 min-h-0 flex-1">
               <ProjectList
+                activeProjectId={activeProjectId}
                 emptyTitle={projectTabs[0].title}
                 emptyDescription={projectTabs[0].description}
+                onNavigate={onClose}
                 projects={ownedProjects}
                 onDeleteProject={onDeleteProject}
                 onRenameProject={onRenameProject}
@@ -107,8 +112,10 @@ export function ProjectSidebar({
 
             <TabsContent value="shared" className="mt-4 min-h-0 flex-1">
               <ProjectList
+                activeProjectId={activeProjectId}
                 emptyTitle={projectTabs[1].title}
                 emptyDescription={projectTabs[1].description}
+                onNavigate={onClose}
                 projects={sharedProjects}
                 onDeleteProject={onDeleteProject}
                 onRenameProject={onRenameProject}
@@ -128,17 +135,21 @@ export function ProjectSidebar({
 }
 
 interface ProjectListProps {
+  activeProjectId?: string
   emptyDescription: string
   emptyTitle: string
-  projects: MockProject[]
+  onNavigate: () => void
+  projects: EditorProject[]
   showActions: boolean
-  onRenameProject: (project: MockProject) => void
-  onDeleteProject: (project: MockProject) => void
+  onRenameProject: (project: EditorProject) => void
+  onDeleteProject: (project: EditorProject) => void
 }
 
 function ProjectList({
+  activeProjectId,
   emptyDescription,
   emptyTitle,
+  onNavigate,
   projects,
   showActions,
   onDeleteProject,
@@ -164,17 +175,26 @@ function ProjectList({
       {projects.map((project) => (
         <div
           key={project.id}
-          className="rounded-2xl border border-surface-border bg-elevated/75 p-4"
+          className={cn(
+            "rounded-2xl border bg-elevated/75 p-4",
+            project.id === activeProjectId
+              ? "border-brand/50 bg-accent-dim"
+              : "border-surface-border"
+          )}
         >
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
+            <Link
+              href={`/editor/${project.id}`}
+              onClick={onNavigate}
+              className="min-w-0 flex-1 rounded-xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-brand/40"
+            >
               <div className="truncate text-sm font-medium text-copy-primary">
                 {project.name}
               </div>
               <div className="mt-1 font-mono text-xs text-brand">
-                {project.slug}
+                {project.id}
               </div>
-            </div>
+            </Link>
 
             {showActions ? (
               <div className="flex items-center gap-2">
