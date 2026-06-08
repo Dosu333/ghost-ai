@@ -10,7 +10,7 @@
 !.yarn/releases
 !.yarn/versions
 
-/context/current-issues.md
+# /context/current-issues.md
 
 # testing
 /coverage

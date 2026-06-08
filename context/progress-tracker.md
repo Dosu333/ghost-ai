@@ -45,6 +45,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - Project creation now previews a room ID, persists that same ID through `POST /api/projects`, and navigates to `/editor/[projectId]` so the project ID and room ID remain aligned.
 - A minimal protected `/editor/[projectId]` route now exists for project-scoped navigation, active project highlighting, and post-create workspace entry.
 - Sidebar project items now use real owned/shared data, link into project routes, and keep owner-only rename/delete actions.
+- Editor project loading now treats Clerk `currentUser()` failures as non-fatal for owned-project rendering, so `/editor` and owner workspace access continue to work when collaborator email lookup is temporarily unavailable.
 
 ## In Progress
 
@@ -56,7 +57,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Open Questions
 
-- Applying the initial Prisma migration to the configured remote PostgreSQL database still requires explicit approval because it mutates an external datasource.
+- None currently.
 
 ## Architecture Decisions
 
@@ -69,10 +70,11 @@ Update this file whenever the current phase, active feature, or implementation s
 - Authentication is enforced via `proxy.ts`, matching the Next.js 16 proxy file convention rather than deprecated `middleware.ts`.
 - Auth verification completed with a successful `npm run build` after allowing network access for the existing Google font fetch.
 - Prisma schema validation and client generation succeeded after adding `@prisma/extension-accelerate` for the Accelerate code path.
-- `prisma migrate dev` was not applied to the configured remote database because explicit approval is still needed before mutating that external datasource.
+- The initial Prisma migration was later applied successfully with `prisma migrate deploy`, so the `Project` and `ProjectCollaborator` tables now exist in the configured PostgreSQL database.
 - Project API backend implementation completed without wiring the existing mock editor UI, matching the current feature spec scope.
 - `npm run build` passed after verifying the new API routes and normalizing the Prisma client export for strict Next.js 16 type checking.
 - The editor home flow now uses real server-fetched project data on first render and no longer depends on mock sidebar/dialog project state.
 - The create flow now generates a stable room ID preview with a short suffix, persists that ID as the project ID, and routes directly into the new workspace path.
 - A lightweight project workspace route exists purely to support protected project navigation until the canvas implementation lands.
 - `npx tsc --noEmit` passes for the real project wiring changes; `npm run build` remains blocked in this sandbox by the existing `next/font/google` Geist fetch.
+- The editor project helpers now fall back cleanly when Clerk's backend `currentUser()` fetch fails, preventing shared-project lookup issues from crashing owner route renders.

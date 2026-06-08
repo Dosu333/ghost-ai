@@ -9,22 +9,28 @@ interface EditorProjectLists {
 }
 
 async function getUserEmailAddresses() {
-  const user = await currentUser()
+  try {
+    const user = await currentUser()
 
-  if (!user) {
+    if (!user) {
+      return []
+    }
+
+    const primaryEmail = user.emailAddresses.find(
+      (emailAddress) => emailAddress.id === user.primaryEmailAddressId
+    )?.emailAddress
+    const allEmails = user.emailAddresses.map(
+      (emailAddress) => emailAddress.emailAddress
+    )
+
+    return primaryEmail
+      ? [primaryEmail, ...allEmails.filter((email) => email !== primaryEmail)]
+      : allEmails
+  } catch {
+    // Shared-project matching should not crash the editor when Clerk's
+    // backend user lookup is temporarily unavailable.
     return []
   }
-
-  const primaryEmail = user.emailAddresses.find(
-    (emailAddress) => emailAddress.id === user.primaryEmailAddressId
-  )?.emailAddress
-  const allEmails = user.emailAddresses.map(
-    (emailAddress) => emailAddress.emailAddress
-  )
-
-  return primaryEmail
-    ? [primaryEmail, ...allEmails.filter((email) => email !== primaryEmail)]
-    : allEmails
 }
 
 export async function getEditorProjectLists(): Promise<EditorProjectLists> {
@@ -37,45 +43,43 @@ export async function getEditorProjectLists(): Promise<EditorProjectLists> {
     }
   }
 
-  const emailAddresses = await getUserEmailAddresses()
+  const ownedProjects = await prisma.project.findMany({
+    where: {
+      ownerId: userId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+  })
 
-  const [ownedProjects, sharedProjects] = await Promise.all([
-    prisma.project.findMany({
-      where: {
-        ownerId: userId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    }),
-    emailAddresses.length
-      ? prisma.project.findMany({
-          where: {
-            ownerId: {
-              not: userId,
-            },
-            collaborators: {
-              some: {
-                collaboratorEmail: {
-                  in: emailAddresses,
-                },
+  const emailAddresses = await getUserEmailAddresses()
+  const sharedProjects = emailAddresses.length
+    ? await prisma.project.findMany({
+        where: {
+          ownerId: {
+            not: userId,
+          },
+          collaborators: {
+            some: {
+              collaboratorEmail: {
+                in: emailAddresses,
               },
             },
           },
-          orderBy: {
-            createdAt: "desc",
-          },
-          select: {
-            id: true,
-            name: true,
-          },
-        })
-      : Promise.resolve([]),
-  ])
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      })
+    : []
 
   return {
     ownedProjects: ownedProjects.map((project) => ({
@@ -96,7 +100,6 @@ export async function getAccessibleEditorProject(projectId: string) {
     return null
   }
 
-  const emailAddresses = await getUserEmailAddresses()
   const project = await prisma.project.findUnique({
     where: {
       id: projectId,
@@ -105,19 +108,7 @@ export async function getAccessibleEditorProject(projectId: string) {
       id: true,
       name: true,
       ownerId: true,
-      collaborators: emailAddresses.length
-        ? {
-            where: {
-              collaboratorEmail: {
-                in: emailAddresses,
-              },
-            },
-            select: {
-              id: true,
-            },
-            take: 1,
-          }
-        : false,
+      collaborators: false,
     },
   })
 
@@ -126,17 +117,40 @@ export async function getAccessibleEditorProject(projectId: string) {
   }
 
   const isOwner = project.ownerId === userId
-  const isCollaborator = Array.isArray(project.collaborators)
-    ? project.collaborators.length > 0
-    : false
 
-  if (!isOwner && !isCollaborator) {
+  if (isOwner) {
+    return {
+      id: project.id,
+      name: project.name,
+      role: "owner",
+    } satisfies EditorProject
+  }
+
+  const emailAddresses = await getUserEmailAddresses()
+
+  if (!emailAddresses.length) {
+    return null
+  }
+
+  const collaboratorMatch = await prisma.projectCollaborator.findFirst({
+    where: {
+      projectId,
+      collaboratorEmail: {
+        in: emailAddresses,
+      },
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!collaboratorMatch) {
     return null
   }
 
   return {
     id: project.id,
     name: project.name,
-    role: isOwner ? "owner" : "collaborator",
+    role: "collaborator",
   } satisfies EditorProject
 }
