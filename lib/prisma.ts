@@ -10,7 +10,7 @@ if (!databaseUrl) {
 
 const createPrismaClient = () => {
   if (databaseUrl.startsWith("prisma+postgres://")) {
-    return new PrismaClient().$extends(withAccelerate());
+    return new PrismaClient().$extends(withAccelerate()) as unknown as PrismaClient;
   }
 
   const adapter = new PrismaPg({ connectionString: databaseUrl });
@@ -18,7 +18,7 @@ const createPrismaClient = () => {
   return new PrismaClient({ adapter });
 };
 
-type PrismaClientSingleton = ReturnType<typeof createPrismaClient>;
+type PrismaClientSingleton = PrismaClient;
 
 const globalForPrisma = globalThis as typeof globalThis & {
   prisma?: PrismaClientSingleton;

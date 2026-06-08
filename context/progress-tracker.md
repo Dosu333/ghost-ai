@@ -36,6 +36,10 @@ Update this file whenever the current phase, active feature, or implementation s
 - Prisma foundation is implemented with folder-based schema models for `Project` and `ProjectCollaborator`, including the required status enum, relations, unique constraints, and indexes.
 - `lib/prisma.ts` now exports a cached Prisma singleton that switches between Prisma Accelerate for `prisma+postgres://` URLs and `@prisma/adapter-pg` for direct PostgreSQL URLs.
 - The first Prisma migration SQL was generated locally at `prisma/migrations/20260608003036_init_project_data/migration.sql`, and Prisma Client generation now targets the standard `@prisma/client` output.
+- Backend project API routes are implemented at `app/api/projects` and `app/api/projects/[projectId]` for authenticated list, create, rename, and delete operations.
+- Project API auth rules now explicitly return `401` for unauthenticated requests and `403` for non-owner rename/delete attempts, with consistent JSON error bodies.
+- Project creation now defaults missing names to `Untitled Project`, while rename requires a non-empty string name.
+- `lib/prisma.ts` now normalizes the cached Prisma export to a single client type so Next.js production type checking passes with either Accelerate or direct PostgreSQL connections.
 
 ## In Progress
 
@@ -43,7 +47,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Replace mock project state with authenticated persistence and ownership-aware navigation.
+- Wire the editor project UI to the authenticated project APIs and replace mock state.
 
 ## Open Questions
 
@@ -62,3 +66,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - Project dialog flows are currently mock-only and mutate local client state without API calls or persistence, matching the current feature spec scope.
 - Prisma schema validation and client generation succeeded after adding `@prisma/extension-accelerate` for the Accelerate code path.
 - `prisma migrate dev` was not applied to the configured remote database because explicit approval is still needed before mutating that external datasource.
+- Project API backend implementation completed without wiring the existing mock editor UI, matching the current feature spec scope.
+- `npm run build` passed after verifying the new API routes and normalizing the Prisma client export for strict Next.js 16 type checking.
