@@ -64,7 +64,6 @@ export async function POST(request: Request) {
 
   const project = await prisma.project.create({
     data: {
-      ...(bodyResult.id ? { id: bodyResult.id } : {}),
       ownerId: authResult.userId,
       name: bodyResult.name,
     },

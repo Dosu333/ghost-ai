@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Move from project management wiring into the first project-scoped workspace route and canvas-ready editor flows.
+- Move from the project-scoped workspace shell into the first real canvas implementation and AI sidebar behavior.
 
 ## Completed
 
@@ -26,6 +26,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - Clerk is now wired into the Next.js app root with a shared `ClerkProvider` appearance config based on the app token system.
 - Sign-in and sign-up pages are implemented with Clerk components and a minimal two-panel auth layout.
 - Route protection is enforced through root-level `proxy.ts` with public auth paths and protected-by-default behavior elsewhere.
+- The landing route `/` is explicitly included in the shared Clerk public route matchers so unauthenticated requests can reach the server redirect logic in `app/page.tsx`.
 - The landing route now redirects authenticated users to `/editor` and unauthenticated users to the Clerk sign-in flow.
 - The editor navbar now includes Clerk's built-in `UserButton` for account actions and sign-out.
 - The `/editor` home screen now shows the minimal project entry state with a centered `New Project` call to action.
@@ -40,12 +41,19 @@ Update this file whenever the current phase, active feature, or implementation s
 - Project API auth rules now explicitly return `401` for unauthenticated requests and `403` for non-owner rename/delete attempts, with consistent JSON error bodies.
 - Project creation now defaults missing names to `Untitled Project`, while rename requires a non-empty string name.
 - `lib/prisma.ts` now normalizes the cached Prisma export to a single client type so Next.js production type checking passes with either Accelerate or direct PostgreSQL connections.
+- `lib/prisma.ts` now defers `DATABASE_URL` validation until Prisma is first used, keeping module imports and static analysis safe while preserving runtime DB checks.
 - The `/editor` home page now stays server-rendered for its initial load and receives owned/shared project lists from a shared server data helper instead of mock client state.
 - Real editor project wiring now uses `hooks/use-project-actions.ts` for create, rename, and delete mutations, including router refreshes and active-workspace delete redirects.
 - Project creation now previews a room ID, persists that same ID through `POST /api/projects`, and navigates to `/editor/[projectId]` so the project ID and room ID remain aligned.
 - A minimal protected `/editor/[projectId]` route now exists for project-scoped navigation, active project highlighting, and post-create workspace entry.
 - Sidebar project items now use real owned/shared data, link into project routes, and keep owner-only rename/delete actions.
 - Editor project loading now treats Clerk `currentUser()` failures as non-fatal for owned-project rendering, so `/editor` and owner workspace access continue to work when collaborator email lookup is temporarily unavailable.
+- `lib/project-access.ts` now centralizes current Clerk identity lookup and owner-or-collaborator access checks for project-scoped server rendering.
+- `/editor/[projectId]` now stays server-rendered, redirects unauthenticated users to Clerk sign-in, and renders `AccessDenied` for missing or unauthorized projects.
+- The project workspace route now renders the editor shell with the active project name in the navbar, left sidebar highlighting, a central canvas placeholder, and a right AI sidebar placeholder.
+- `components/editor/access-denied.tsx` now provides the locked access state with a return link to `/editor`.
+- Clerk auth page form appearance is now shared through `lib/clerk.ts`, so sign-in and sign-up stay visually aligned without duplicated inline config.
+- Verification completed for this unit with both `npx tsc --noEmit` and `npm run build`.
 
 ## In Progress
 
@@ -53,7 +61,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Start the project-scoped editor canvas work now that project navigation and real workspace entry routes exist.
+- Start the real project canvas implementation inside `/editor/[projectId]`, then wire the AI sidebar to actual generation flows.
 
 ## Open Questions
 
@@ -75,6 +83,10 @@ Update this file whenever the current phase, active feature, or implementation s
 - `npm run build` passed after verifying the new API routes and normalizing the Prisma client export for strict Next.js 16 type checking.
 - The editor home flow now uses real server-fetched project data on first render and no longer depends on mock sidebar/dialog project state.
 - The create flow now generates a stable room ID preview with a short suffix, persists that ID as the project ID, and routes directly into the new workspace path.
-- A lightweight project workspace route exists purely to support protected project navigation until the canvas implementation lands.
-- `npx tsc --noEmit` passes for the real project wiring changes; `npm run build` remains blocked in this sandbox by the existing `next/font/google` Geist fetch.
+- The project workspace route now includes the verified shell layout and protected access states ahead of the real canvas implementation.
+- `npx tsc --noEmit` and `npm run build` both pass for the workspace-shell implementation once the existing `next/font/google` Geist fetch is allowed.
 - The editor project helpers now fall back cleanly when Clerk's backend `currentUser()` fetch fails, preventing shared-project lookup issues from crashing owner route renders.
+- The workspace-shell feature is now implemented and verified; the only build escalation required was the existing `next/font/google` Geist fetch.
+- The duplicated Clerk auth form `appearance` config was consolidated into a shared export and will be covered by follow-up type-check validation for this small refactor.
+- Prisma client initialization is now lazy, so build-time or import-only evaluation no longer throws before a real database call requests the client.
+- Clerk public route matching now includes `/`, preventing proxy auth protection from intercepting the home route before its redirect logic runs.

@@ -9,12 +9,14 @@ interface EditorNavbarProps {
   isSidebarOpen: boolean
   onToggleSidebar: () => void
   rightSlot?: ReactNode
+  title?: string
 }
 
 export function EditorNavbar({
   isSidebarOpen,
   onToggleSidebar,
   rightSlot,
+  title = "Editor workspace",
 }: EditorNavbarProps) {
   const SidebarIcon = isSidebarOpen ? PanelLeftClose : PanelLeftOpen
 
@@ -35,7 +37,7 @@ export function EditorNavbar({
 
         <div className="flex items-center justify-center">
           <div className="rounded-xl border border-surface-border bg-elevated/80 px-3 py-1.5 text-sm text-copy-secondary">
-            Editor workspace
+            {title}
           </div>
         </div>
 

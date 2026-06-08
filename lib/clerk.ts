@@ -38,6 +38,7 @@ export const clerkAuthPaths = {
 }
 
 export const clerkPublicRouteMatchers = [
+  toRouteMatcher("/"),
   toRouteMatcher(clerkAuthPaths.signIn),
   toRouteMatcher(clerkAuthPaths.signUp),
 ]
@@ -56,5 +57,20 @@ export const clerkAppearance = {
     colorSuccess: "var(--state-success)",
     borderRadius: "1rem",
     fontFamily: "var(--font-geist-sans)",
+  },
+} as const
+
+export const clerkAuthFormAppearance = {
+  elements: {
+    card: "bg-transparent shadow-none",
+    rootBox: "w-full",
+    headerTitle: "text-copy-primary",
+    headerSubtitle: "text-copy-secondary",
+    socialButtonsBlockButton:
+      "border-surface-border bg-elevated text-copy-primary hover:bg-subtle",
+    formFieldInput: "border-surface-border bg-elevated text-copy-primary",
+    formButtonPrimary: "bg-brand text-base hover:bg-brand/80",
+    footerActionLink: "text-brand hover:text-brand/80",
+    identityPreviewEditButton: "text-copy-secondary hover:text-copy-primary",
   },
 } as const
