@@ -6,7 +6,9 @@ import { useEffect, useRef, useState, type SyntheticEvent } from "react"
 import { CanvasShape } from "@/components/editor/canvas-shape"
 import {
   EMPTY_NODE_LABEL_PLACEHOLDER,
+  NODE_COLORS,
   SHAPE_MIN_SIZES,
+  type CanvasNodeColor,
   type CanvasNode,
 } from "@/types/canvas"
 
@@ -17,10 +19,68 @@ const resizeHandleClassName =
 const resizeLineClassName = "border-[var(--border-subtle)] opacity-70"
 
 interface CanvasNodeComponentProps extends NodeProps<CanvasNode> {
+  onColorChange: (nodeId: string, color: CanvasNodeColor) => void
   onLabelChange: (nodeId: string, label: string) => void
 }
 
+function stopCanvasInteraction(event: SyntheticEvent) {
+  event.stopPropagation()
+}
+
+function NodeColorToolbar({
+  activeColor,
+  onColorSelect,
+}: {
+  activeColor: CanvasNodeColor
+  onColorSelect: (color: CanvasNodeColor) => void
+}) {
+  return (
+    <div
+      className="nodrag nopan absolute left-1/2 top-0 z-20 flex -translate-x-1/2 -translate-y-[calc(100%+12px)] items-center gap-2 rounded-2xl border border-surface-border bg-surface/95 px-3 py-2 shadow-lg shadow-black/30 backdrop-blur-sm"
+      onClick={stopCanvasInteraction}
+      onDoubleClick={stopCanvasInteraction}
+      onMouseDown={stopCanvasInteraction}
+      onPointerDown={stopCanvasInteraction}
+    >
+      {NODE_COLORS.map((colorPair) => {
+        const isActive = colorPair.background === activeColor
+
+        return (
+          <button
+            key={colorPair.background}
+            type="button"
+            aria-label={`Select node color ${colorPair.background}`}
+            className="h-5 w-5 rounded-full border transition-transform duration-150 hover:scale-105 focus-visible:outline-none"
+            style={{
+              backgroundColor: colorPair.background,
+              borderColor: isActive ? colorPair.text : "var(--border-subtle)",
+              boxShadow: isActive
+                ? `0 0 0 2px color-mix(in srgb, ${colorPair.text} 24%, transparent), 0 0 10px color-mix(in srgb, ${colorPair.text} 28%, transparent)`
+                : undefined,
+            }}
+            onClick={(event) => {
+              stopCanvasInteraction(event)
+              onColorSelect(colorPair.background)
+            }}
+            onMouseEnter={(event) => {
+              event.currentTarget.style.boxShadow = isActive
+                ? `0 0 0 2px color-mix(in srgb, ${colorPair.text} 24%, transparent), 0 0 10px color-mix(in srgb, ${colorPair.text} 28%, transparent)`
+                : `0 0 8px color-mix(in srgb, ${colorPair.text} 30%, transparent)`
+            }}
+            onMouseLeave={(event) => {
+              event.currentTarget.style.boxShadow = isActive
+                ? `0 0 0 2px color-mix(in srgb, ${colorPair.text} 24%, transparent), 0 0 10px color-mix(in srgb, ${colorPair.text} 28%, transparent)`
+                : ""
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 export function CanvasNodeComponent({
+  onColorChange,
   data,
   id,
   height = 0,
@@ -52,10 +112,6 @@ export function CanvasNodeComponent({
     textareaRef.current?.select()
   }, [isEditing])
 
-  function stopCanvasInteraction(event: SyntheticEvent) {
-    event.stopPropagation()
-  }
-
   function handleLabelUpdate(nextLabel: string) {
     setDraftLabel(nextLabel)
     onLabelChange(id, nextLabel)
@@ -63,6 +119,14 @@ export function CanvasNodeComponent({
 
   return (
     <div className="group relative">
+      {selected ? (
+        <NodeColorToolbar
+          activeColor={data.color}
+          onColorSelect={(color) => {
+            onColorChange(id, color)
+          }}
+        />
+      ) : null}
       <NodeResizer
         isVisible={selected}
         minWidth={minSize.width}

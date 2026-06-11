@@ -72,6 +72,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Canvas nodes now support centered inline label editing on double-click, including placeholder rendering for empty labels, a textarea overlay while editing, live collaborative label updates as users type, `Escape`/blur exit, and drag/pan suppression during text entry.
 - Node-editing verification completed with `npx tsc --noEmit`; `npm run build` was started but did not finish producing output in the sandbox during this session.
 - The node-editing follow-up now keeps textarea focus stable while typing by preventing custom node remounts on each label update, exits editing on `Enter`, and restores side-only resizing by limiting label hit areas so the React Flow resizer lines stay reachable.
+- Selected canvas nodes now show a floating color toolbar with the predefined palette, and swatch selection updates each node's collaborative color theme immediately through the existing Liveblocks node state flow.
+- Node-colors toolbar verification completed with `npx tsc --noEmit` in the workspace and `npm run build` in a temporary repo copy after bypassing an orphaned local `.next` build lock.
 
 ## In Progress
 
@@ -79,7 +81,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Add AI generation controls on top of the collaborative canvas now that node editing is in place.
+- Add AI generation controls on top of the collaborative canvas after the node colors toolbar is finished.
 
 ## Open Questions
 
@@ -117,3 +119,4 @@ Update this file whenever the current phase, active feature, or implementation s
 - The node-shape unit is now implemented with reusable shape rendering and drag ghost behavior; `npx tsc --noEmit` passes locally, while `npm run build` still depends on allowing the existing `next/font/google` Geist fetch outside the sandbox.
 - The node-editing unit is now implemented with selected-only resizing and inline collaborative label editing; `npx tsc --noEmit` passes locally, while the sandboxed `npm run build` run did not complete with additional output during verification.
 - The node-editing follow-up fix is verified with `npx tsc --noEmit`; it keeps collaborative live label updates but stabilizes the node renderer identity so inline editing no longer drops focus on every keystroke.
+- The node-colors toolbar unit is now implemented and verified; the workspace build lock was avoided by verifying `npm run build` from a temporary `/tmp/ghost-ai-verify` copy while keeping the same source changes.

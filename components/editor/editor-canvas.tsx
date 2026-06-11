@@ -22,6 +22,7 @@ import {
   DEFAULT_NODE_COLOR,
   NODE_SHAPES,
   SHAPE_DRAG_MIME_TYPE,
+  type CanvasNodeColor,
   type CanvasShapeDragPayload,
 } from "@/types/canvas"
 
@@ -107,13 +108,42 @@ export function EditorCanvas() {
     [onNodesChange],
   )
 
+  const handleNodeColorChange = useCallback(
+    (nodeId: string, color: CanvasNodeColor) => {
+      const currentNode = nodesRef.current.find((node) => node.id === nodeId)
+
+      if (!currentNode || currentNode.data.color === color) {
+        return
+      }
+
+      const change: NodeChange<CanvasNode> = {
+        id: nodeId,
+        type: "replace",
+        item: {
+          ...currentNode,
+          data: {
+            ...currentNode.data,
+            color,
+          },
+        },
+      }
+
+      onNodesChange([change])
+    },
+    [onNodesChange],
+  )
+
   const nodeTypes = useMemo(
     () => ({
       [CANVAS_NODE_TYPE]: (props: NodeProps<CanvasNode>) => (
-        <CanvasNodeComponent {...props} onLabelChange={handleNodeLabelChange} />
+        <CanvasNodeComponent
+          {...props}
+          onColorChange={handleNodeColorChange}
+          onLabelChange={handleNodeLabelChange}
+        />
       ),
     }),
-    [handleNodeLabelChange],
+    [handleNodeColorChange, handleNodeLabelChange],
   )
 
   useEffect(() => {
