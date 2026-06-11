@@ -8,6 +8,7 @@ interface CanvasShapeProps {
   color: CanvasNodeColor
   height: number
   label?: ReactNode
+  labelClassName?: string
   selected?: boolean
   shape: CanvasNodeShape
   width: number
@@ -167,6 +168,7 @@ export function CanvasShape({
   color,
   height,
   label,
+  labelClassName,
   selected = false,
   shape,
   width,
@@ -201,7 +203,9 @@ export function CanvasShape({
         renderShapeSvg(shape, colorPair.background, borderColor)
       )}
 
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-5 py-4 text-center">
+      <div
+        className={`absolute inset-0 flex items-center justify-center px-5 py-4 text-center ${labelClassName ?? "pointer-events-none"}`}
+      >
         {label}
       </div>
     </div>

@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Layer the next editor controls on top of the collaborative canvas, starting with AI generation workflows.
+- Add AI generation controls on top of the collaborative canvas.
 
 ## Completed
 
@@ -68,6 +68,10 @@ Update this file whenever the current phase, active feature, or implementation s
 - Shape dragging now shows a cursor-following ghost preview that matches the dragged shape and default drop size, then clears cleanly on drop or cancel.
 - The project workspace canvas now renders as a full-bleed editor surface with no rounded outer frame, while the AI panel floats as a right-side overlay instead of reserving canvas width.
 - Verification completed for the shape-panel unit with both `npx tsc --noEmit` and `npm run build`.
+- Selected canvas nodes now show subtle built-in resize handles, with per-shape minimum sizes enforced through the existing Liveblocks-backed node change flow.
+- Canvas nodes now support centered inline label editing on double-click, including placeholder rendering for empty labels, a textarea overlay while editing, live collaborative label updates as users type, `Escape`/blur exit, and drag/pan suppression during text entry.
+- Node-editing verification completed with `npx tsc --noEmit`; `npm run build` was started but did not finish producing output in the sandbox during this session.
+- The node-editing follow-up now keeps textarea focus stable while typing by preventing custom node remounts on each label update, exits editing on `Enter`, and restores side-only resizing by limiting label hit areas so the React Flow resizer lines stay reachable.
 
 ## In Progress
 
@@ -75,7 +79,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Add AI generation controls on top of the collaborative canvas now that node creation and shape rendering are in place.
+- Add AI generation controls on top of the collaborative canvas now that node editing is in place.
 
 ## Open Questions
 
@@ -111,3 +115,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - The shape-panel unit is now implemented and verified; `npm run build` passed after allowing the existing Next.js font fetch used by the shared Geist setup.
 - The workspace shell now treats the canvas as the base layer for project routes, so both side panels can hover above it without shrinking the collaborative surface.
 - The node-shape unit is now implemented with reusable shape rendering and drag ghost behavior; `npx tsc --noEmit` passes locally, while `npm run build` still depends on allowing the existing `next/font/google` Geist fetch outside the sandbox.
+- The node-editing unit is now implemented with selected-only resizing and inline collaborative label editing; `npx tsc --noEmit` passes locally, while the sandboxed `npm run build` run did not complete with additional output during verification.
+- The node-editing follow-up fix is verified with `npx tsc --noEmit`; it keeps collaborative live label updates but stabilizes the node renderer identity so inline editing no longer drops focus on every keystroke.

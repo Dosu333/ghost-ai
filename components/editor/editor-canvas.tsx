@@ -5,11 +5,13 @@ import {
   BackgroundVariant,
   ConnectionMode,
   MiniMap,
+  type NodeProps,
   ReactFlow,
+  type NodeChange,
   type ReactFlowInstance,
 } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
 import { CanvasShape } from "@/components/editor/canvas-shape"
@@ -25,10 +27,6 @@ import {
 
 import "@xyflow/react/dist/style.css"
 import "@liveblocks/react-flow/styles.css"
-
-const nodeTypes = {
-  [CANVAS_NODE_TYPE]: CanvasNodeComponent,
-}
 
 function parseShapeDragPayload(
   payload: string,
@@ -63,6 +61,7 @@ interface DragPreviewState {
 
 export function EditorCanvas() {
   const nodeIdCounterRef = useRef(0)
+  const nodesRef = useRef<CanvasNode[]>([])
   const reactFlowInstanceRef = useRef<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(
     null,
   )
@@ -78,6 +77,44 @@ export function EditorCanvas() {
         initial: [],
       },
     })
+
+  useEffect(() => {
+    nodesRef.current = nodes
+  }, [nodes])
+
+  const handleNodeLabelChange = useCallback(
+    (nodeId: string, label: string) => {
+      const currentNode = nodesRef.current.find((node) => node.id === nodeId)
+
+      if (!currentNode || currentNode.data.label === label) {
+        return
+      }
+
+      const change: NodeChange<CanvasNode> = {
+        id: nodeId,
+        type: "replace",
+        item: {
+          ...currentNode,
+          data: {
+            ...currentNode.data,
+            label,
+          },
+        },
+      }
+
+      onNodesChange([change])
+    },
+    [onNodesChange],
+  )
+
+  const nodeTypes = useMemo(
+    () => ({
+      [CANVAS_NODE_TYPE]: (props: NodeProps<CanvasNode>) => (
+        <CanvasNodeComponent {...props} onLabelChange={handleNodeLabelChange} />
+      ),
+    }),
+    [handleNodeLabelChange],
+  )
 
   useEffect(() => {
     if (!isDraggingShape) {
