@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Phase 3: Authentication complete
+- Phase 4: Realtime collaboration foundation
 
 ## Current Goal
 
-- Move from workspace shell management features into the first real canvas implementation and AI sidebar behavior.
+- Layer the next editor controls on top of the collaborative canvas, starting with AI generation workflows.
 
 ## Completed
 
@@ -55,7 +55,16 @@ Update this file whenever the current phase, active feature, or implementation s
 - Share management is now implemented through `app/api/projects/[projectId]/collaborators`, covering collaborator listing, owner-only invite, and owner-only removal.
 - Collaborator API responses now enrich stored emails with Clerk display names and avatar images when available, while falling back to email-only entries when a Clerk user is not found.
 - The workspace `Share` button now opens a dedicated dialog where owners can invite, remove, and copy the project link with temporary `Copied!` feedback, while collaborators see a read-only collaborator list.
+- The share dialog access list now includes the project owner with Clerk-enriched identity details and a visible owner role badge, while keeping removal actions limited to invited collaborators.
 - Clerk auth page form appearance is now shared through `lib/clerk.ts`, so sign-in and sign-up stay visually aligned without duplicated inline config.
+- `liveblocks.config.ts` now defines the shared presence contract for cursor state and AI thinking state, plus typed Liveblocks user metadata for display name, avatar, and cursor color.
+- `lib/liveblocks.ts` now provides a cached `@liveblocks/node` client with lazy `LIVEBLOCKS_SECRET_KEY` validation and deterministic user-to-cursor-color mapping.
+- `app/api/liveblocks-auth` now authenticates Clerk users, verifies project membership, syncs Liveblocks room membership from project access data, and returns ID-token auth responses with user metadata.
+- Project collaborator helpers now expose Clerk user ID resolution for project members so Liveblocks room permissions can stay aligned with owner/collaborator access.
+- The editor canvas now includes a floating bottom shape panel with draggable entries for rectangle, diamond, circle, pill, cylinder, and hexagon.
+- Shape drag payloads now include the supported shape name plus sensible default width and height data, and the canvas drop flow creates synced custom canvas nodes at the dropped React Flow position.
+- A basic custom `canvasNode` renderer now displays newly dropped nodes as bordered rectangles with centered labels so shape-created nodes are immediately visible on the collaborative canvas.
+- The project workspace canvas now renders as a full-bleed editor surface with no rounded outer frame, while the AI panel floats as a right-side overlay instead of reserving canvas width.
 - Verification completed for this unit with both `npx tsc --noEmit` and `npm run build`.
 
 ## In Progress
@@ -64,7 +73,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Start the real project canvas implementation inside `/editor/[projectId]`, then replace the AI placeholder sidebar with actual generation flows.
+- Add AI generation controls on top of the collaborative canvas now that the shape-panel drop flow is in place.
 
 ## Open Questions
 
@@ -94,3 +103,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - The duplicated Clerk auth form `appearance` config was consolidated into a shared export and will be covered by follow-up type-check validation for this small refactor.
 - Prisma client initialization is now lazy, so build-time or import-only evaluation no longer throws before a real database call requests the client.
 - Clerk public route matching now includes `/`, preventing proxy auth protection from intercepting the home route before its redirect logic runs.
+- Liveblocks room auth now uses the project ID as the room ID and updates room `usersAccesses` from the current project membership set before issuing an ID token.
+- Production build verification still requires network access because the existing root layout fetches Geist fonts through `next/font/google`.
+- The base-canvas unit expects the client provider to authenticate by room ID, so `/api/liveblocks-auth` should accept the provider-posted room payload while preserving the project ID to room ID invariant.
+- The shape-panel unit is now implemented and verified; `npm run build` passed after allowing the existing Next.js font fetch used by the shared Geist setup.
+- The workspace shell now treats the canvas as the base layer for project routes, so both side panels can hover above it without shrinking the collaborative surface.

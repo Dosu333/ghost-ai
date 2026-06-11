@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { ProjectCollaborator } from "@/types/projects"
+import type { ProjectAccessMember } from "@/types/projects"
 
 interface ShareDialogProps {
   isOpen: boolean
@@ -25,7 +25,7 @@ interface ShareDialogProps {
 
 interface CollaboratorsResponse {
   canManageAccess: boolean
-  collaborators: ProjectCollaborator[]
+  collaborators: ProjectAccessMember[]
 }
 
 export function ShareDialog({
@@ -36,7 +36,7 @@ export function ShareDialog({
   onOpenChange,
 }: ShareDialogProps) {
   const [canManageAccess, setCanManageAccess] = useState(projectRole === "owner")
-  const [collaborators, setCollaborators] = useState<ProjectCollaborator[]>([])
+  const [collaborators, setCollaborators] = useState<ProjectAccessMember[]>([])
   const [inviteEmail, setInviteEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isInviting, setIsInviting] = useState(false)
@@ -152,9 +152,7 @@ export function ShareDialog({
         throw new Error(body?.error?.message || "Failed to invite collaborator.")
       }
 
-      const body = (await response.json()) as {
-        collaborators: ProjectCollaborator[]
-      }
+      const body = (await response.json()) as CollaboratorsResponse
 
       setCollaborators(body.collaborators)
       setInviteEmail("")
@@ -188,7 +186,10 @@ export function ShareDialog({
       }
 
       setCollaborators((currentCollaborators) =>
-        currentCollaborators.filter((collaborator) => collaborator.email !== email)
+        currentCollaborators.filter(
+          (collaborator) =>
+            collaborator.role !== "collaborator" || collaborator.email !== email
+        )
       )
     } catch (error) {
       setErrorMessage(
@@ -331,7 +332,7 @@ export function ShareDialog({
 }
 
 interface CollaboratorRowProps {
-  collaborator: ProjectCollaborator
+  collaborator: ProjectAccessMember
   canManageAccess: boolean
   isRemoving: boolean
   onRemove: () => void
@@ -366,15 +367,18 @@ function CollaboratorRow({
           <div className="truncate text-sm font-medium text-copy-primary">
             {collaborator.displayName || collaborator.email}
           </div>
-          {collaborator.displayName ? (
-            <div className="truncate text-sm text-copy-muted">
-              {collaborator.email}
-            </div>
-          ) : null}
+          <div className="flex items-center gap-2 text-sm text-copy-muted">
+            {collaborator.displayName ? (
+              <span className="truncate">{collaborator.email}</span>
+            ) : null}
+            <span className="rounded-full border border-surface-border bg-subtle px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-copy-secondary">
+              {collaborator.role}
+            </span>
+          </div>
         </div>
       </div>
 
-      {canManageAccess ? (
+      {canManageAccess && collaborator.role === "collaborator" ? (
         <Button
           type="button"
           variant="ghost"

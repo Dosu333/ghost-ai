@@ -1,5 +1,8 @@
 import { getCurrentProjectIdentity, getProjectAccess } from "@/lib/project-access"
-import { getProjectCollaborators, parseCollaboratorBody } from "@/lib/project-collaborators"
+import {
+  getProjectAccessMembers,
+  parseCollaboratorBody,
+} from "@/lib/project-collaborators"
 import {
   getOwnedProjectForMutation,
   jsonError,
@@ -31,7 +34,7 @@ export async function GET(
     return jsonError(404, "NOT_FOUND", "Project not found.")
   }
 
-  const collaborators = await getProjectCollaborators(projectId)
+  const collaborators = await getProjectAccessMembers(projectId)
 
   return Response.json({
     canManageAccess: project.role === "owner",
@@ -99,7 +102,7 @@ export async function POST(
     },
   })
 
-  const collaborators = await getProjectCollaborators(projectId)
+  const collaborators = await getProjectAccessMembers(projectId)
 
   return Response.json({ collaborators }, { status: 201 })
 }
