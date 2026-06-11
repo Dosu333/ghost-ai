@@ -6,7 +6,6 @@ import {
   BackgroundVariant,
   ConnectionMode,
   MarkerType,
-  MiniMap,
   type EdgeChange,
   type EdgeProps,
   type NodeProps,
@@ -17,12 +16,26 @@ import {
   type ReactFlowInstance,
 } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+} from "@liveblocks/react/suspense"
 
+import { CanvasControlBar } from "@/components/editor/canvas-control-bar"
 import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
 import { CanvasShape } from "@/components/editor/canvas-shape"
 import { ShapePanel } from "@/components/editor/shape-panel"
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import type { CanvasEdge, CanvasNode } from "@/types/canvas"
 import {
   CANVAS_EDGE_TYPE,
@@ -68,15 +81,22 @@ interface DragPreviewState {
   payload: CanvasShapeDragPayload
 }
 
+const VIEWPORT_ANIMATION_DURATION_MS = 180
+
 export function EditorCanvas() {
   const nodeIdCounterRef = useRef(0)
   const nodesRef = useRef<CanvasNode[]>([])
   const edgesRef = useRef<CanvasEdge[]>([])
-  const reactFlowInstanceRef = useRef<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(
-    null,
-  )
+  const reactFlowInstanceRef =
+    useRef<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null)
   const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null)
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null)
   const isDraggingShape = dragPreview !== null
+  const undo = useUndo()
+  const redo = useRedo()
+  const canUndo = useCanUndo()
+  const canRedo = useCanRedo()
   const { edges, nodes, onDelete, onEdgesChange, onNodesChange } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
       suspense: true,
@@ -95,6 +115,46 @@ export function EditorCanvas() {
   useEffect(() => {
     edgesRef.current = edges
   }, [edges])
+
+  const handleZoomIn = useCallback(() => {
+    void reactFlowInstance?.zoomIn({
+      duration: VIEWPORT_ANIMATION_DURATION_MS,
+    })
+  }, [reactFlowInstance])
+
+  const handleZoomOut = useCallback(() => {
+    void reactFlowInstance?.zoomOut({
+      duration: VIEWPORT_ANIMATION_DURATION_MS,
+    })
+  }, [reactFlowInstance])
+
+  const handleFitView = useCallback(() => {
+    void reactFlowInstance?.fitView({
+      duration: VIEWPORT_ANIMATION_DURATION_MS,
+    })
+  }, [reactFlowInstance])
+
+  const handleUndo = useCallback(() => {
+    if (!canUndo) {
+      return
+    }
+
+    undo()
+  }, [canUndo, undo])
+
+  const handleRedo = useCallback(() => {
+    if (!canRedo) {
+      return
+    }
+
+    redo()
+  }, [canRedo, redo])
+
+  useKeyboardShortcuts({
+    reactFlow: reactFlowInstance,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+  })
 
   const handleNodeLabelChange = useCallback(
     (nodeId: string, label: string) => {
@@ -345,6 +405,7 @@ export function EditorCanvas() {
         onNodesChange={onNodesChange}
         onInit={(instance) => {
           reactFlowInstanceRef.current = instance
+          setReactFlowInstance(instance)
         }}
         connectionMode={ConnectionMode.Loose}
         fitView
@@ -353,18 +414,6 @@ export function EditorCanvas() {
         edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
       >
-        <MiniMap<CanvasNode>
-          pannable
-          zoomable
-          bgColor="var(--bg-elevated)"
-          className="!rounded-2xl !border !border-[var(--border-default)] !bg-elevated/95"
-          maskColor="rgba(8, 8, 9, 0.68)"
-          maskStrokeColor="var(--accent-primary)"
-          nodeColor={(node) => node.data.color}
-          nodeStrokeColor={(node) =>
-            node.selected ? "var(--accent-primary)" : "var(--border-default)"
-          }
-        />
         <Background
           color="var(--border-default)"
           gap={24}
@@ -388,6 +437,15 @@ export function EditorCanvas() {
           />
         </div>
       ) : null}
+      <CanvasControlBar
+        canRedo={canRedo}
+        canUndo={canUndo}
+        onFitView={handleFitView}
+        onRedo={handleRedo}
+        onUndo={handleUndo}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+      />
       <ShapePanel
         onDragStart={(payload, cursorPosition) => {
           setDragPreview({

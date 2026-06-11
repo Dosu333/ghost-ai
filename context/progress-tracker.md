@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement custom canvas edge behaviour with four-side handles, improved routing, and inline labels.
+- Add AI generation controls on top of the collaborative canvas after the ergonomics and edge-behaviour units.
 
 ## Completed
 
@@ -78,14 +78,18 @@ Update this file whenever the current phase, active feature, or implementation s
 - New canvas connections now default to the custom `canvasEdge` type with arrowheads, rounded light strokes, and a widened interaction hit area without increasing visible edge thickness.
 - Custom canvas edges now support hover/selection emphasis, right-angle smooth-step routing, inline pill labels, and double-click label editing positioned through `EdgeLabelRenderer` with `getSmoothStepPath` midpoint coordinates.
 - Edge label changes now flow through the existing collaborative Liveblocks edge state using replace updates, and edge-behaviour type validation passed with `npx tsc --noEmit`.
+- A floating bottom-left canvas control bar now provides zoom out, fit view, zoom in, undo, and redo actions, with undo/redo disabled states driven by Liveblocks history availability.
+- Canvas zoom controls now call the active React Flow instance with short animated transitions, and the minimap has been removed from the workspace.
+- Keyboard shortcut handling now lives in `hooks/use-keyboard-shortcuts`, covering `+`, `=`, `-`, `Cmd/Ctrl + Z`, `Cmd/Ctrl + Shift + Z`, and `Cmd/Ctrl + Y` while skipping editable inputs, textareas, and contenteditable fields.
+- Canvas ergonomics verification completed with `npx tsc --noEmit` and `npm run build`.
 
 ## In Progress
 
-- Edge behaviour unit final verification: `npm run build` is still awaiting an explicit network-enabled run because the existing `next/font/google` Geist fetch fails inside the sandbox.
+- None currently.
 
 ## Next Up
 
-- Add AI generation controls on top of the collaborative canvas after the edge behaviour unit is finished.
+- Start the AI generation controls unit on top of the collaborative canvas.
 
 ## Open Questions
 
@@ -98,6 +102,7 @@ Update this file whenever the current phase, active feature, or implementation s
 ## Session Notes
 
 - The landing page now acts as an editor workspace shell preview with a floating overlay sidebar.
+- The canvas ergonomics unit was tracked ahead of implementation and is now complete, covering the zoom/history control bar, shortcut hook extraction, and minimap removal.
 - Production build verification required network access because the existing root layout fetches Geist fonts with `next/font/google`.
 - Authentication is enforced via `proxy.ts`, matching the Next.js 16 proxy file convention rather than deprecated `middleware.ts`.
 - Auth verification completed with a successful `npm run build` after allowing network access for the existing Google font fetch.
@@ -125,3 +130,4 @@ Update this file whenever the current phase, active feature, or implementation s
 - The node-editing follow-up fix is verified with `npx tsc --noEmit`; it keeps collaborative live label updates but stabilizes the node renderer identity so inline editing no longer drops focus on every keystroke.
 - The node-colors toolbar unit is now implemented and verified; the workspace build lock was avoided by verifying `npm run build` from a temporary `/tmp/ghost-ai-verify` copy while keeping the same source changes.
 - The edge-behaviour unit is implemented and type-checked locally; the remaining production build verification is currently blocked only by the existing `next/font/google` Geist and Geist Mono fetch during `npm run build`.
+- The canvas ergonomics unit is now implemented and verified; `npx tsc --noEmit` passed locally, and `npm run build` passed after allowing network access for the existing `next/font/google` Geist and Geist Mono fetch.
