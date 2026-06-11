@@ -13,7 +13,7 @@ import {
 } from "@/types/canvas"
 
 const handleClassName =
-  "size-3 rounded-full border border-white/40 bg-white opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+  "size-3 rounded-full border border-[var(--bg-base)] bg-[var(--text-primary)] opacity-0 shadow-sm shadow-black/40 transition-opacity duration-150 group-hover:opacity-100"
 const resizeHandleClassName =
   "size-3 rounded-full border border-[var(--accent-primary)] bg-[var(--bg-elevated)] shadow-sm shadow-black/30"
 const resizeLineClassName = "border-[var(--border-subtle)] opacity-70"
@@ -144,21 +144,25 @@ export function CanvasNodeComponent({
         }}
       />
       <Handle
-        type="target"
+        id="top"
+        type="source"
         position={Position.Top}
         className={handleClassName}
       />
       <Handle
-        type="target"
+        id="left"
+        type="source"
         position={Position.Left}
         className={handleClassName}
       />
       <Handle
+        id="right"
         type="source"
         position={Position.Right}
         className={handleClassName}
       />
       <Handle
+        id="bottom"
         type="source"
         position={Position.Bottom}
         className={handleClassName}

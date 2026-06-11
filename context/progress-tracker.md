@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Add AI generation controls on top of the collaborative canvas.
+- Implement custom canvas edge behaviour with four-side handles, improved routing, and inline labels.
 
 ## Completed
 
@@ -74,14 +74,18 @@ Update this file whenever the current phase, active feature, or implementation s
 - The node-editing follow-up now keeps textarea focus stable while typing by preventing custom node remounts on each label update, exits editing on `Enter`, and restores side-only resizing by limiting label hit areas so the React Flow resizer lines stay reachable.
 - Selected canvas nodes now show a floating color toolbar with the predefined palette, and swatch selection updates each node's collaborative color theme immediately through the existing Liveblocks node state flow.
 - Node-colors toolbar verification completed with `npx tsc --noEmit` in the workspace and `npm run build` in a temporary repo copy after bypassing an orphaned local `.next` build lock.
+- Canvas nodes now expose four subtle edge handles with unique side IDs, allowing loose-mode connections from any side to any other side while keeping the node renderer otherwise unchanged.
+- New canvas connections now default to the custom `canvasEdge` type with arrowheads, rounded light strokes, and a widened interaction hit area without increasing visible edge thickness.
+- Custom canvas edges now support hover/selection emphasis, right-angle smooth-step routing, inline pill labels, and double-click label editing positioned through `EdgeLabelRenderer` with `getSmoothStepPath` midpoint coordinates.
+- Edge label changes now flow through the existing collaborative Liveblocks edge state using replace updates, and edge-behaviour type validation passed with `npx tsc --noEmit`.
 
 ## In Progress
 
-- None currently.
+- Edge behaviour unit final verification: `npm run build` is still awaiting an explicit network-enabled run because the existing `next/font/google` Geist fetch fails inside the sandbox.
 
 ## Next Up
 
-- Add AI generation controls on top of the collaborative canvas after the node colors toolbar is finished.
+- Add AI generation controls on top of the collaborative canvas after the edge behaviour unit is finished.
 
 ## Open Questions
 
@@ -120,3 +124,4 @@ Update this file whenever the current phase, active feature, or implementation s
 - The node-editing unit is now implemented with selected-only resizing and inline collaborative label editing; `npx tsc --noEmit` passes locally, while the sandboxed `npm run build` run did not complete with additional output during verification.
 - The node-editing follow-up fix is verified with `npx tsc --noEmit`; it keeps collaborative live label updates but stabilizes the node renderer identity so inline editing no longer drops focus on every keystroke.
 - The node-colors toolbar unit is now implemented and verified; the workspace build lock was avoided by verifying `npm run build` from a temporary `/tmp/ghost-ai-verify` copy while keeping the same source changes.
+- The edge-behaviour unit is implemented and type-checked locally; the remaining production build verification is currently blocked only by the existing `next/font/google` Geist and Geist Mono fetch during `npm run build`.

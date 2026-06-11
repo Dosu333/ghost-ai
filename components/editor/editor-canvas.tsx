@@ -1,23 +1,31 @@
 "use client"
 
 import {
+  addEdge,
   Background,
   BackgroundVariant,
   ConnectionMode,
+  MarkerType,
   MiniMap,
+  type EdgeChange,
+  type EdgeProps,
   type NodeProps,
   ReactFlow,
+  type DefaultEdgeOptions,
+  type OnConnect,
   type NodeChange,
   type ReactFlowInstance,
 } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
+import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
 import { CanvasShape } from "@/components/editor/canvas-shape"
 import { ShapePanel } from "@/components/editor/shape-panel"
 import type { CanvasEdge, CanvasNode } from "@/types/canvas"
 import {
+  CANVAS_EDGE_TYPE,
   CANVAS_NODE_TYPE,
   DEFAULT_NODE_COLOR,
   NODE_SHAPES,
@@ -63,12 +71,13 @@ interface DragPreviewState {
 export function EditorCanvas() {
   const nodeIdCounterRef = useRef(0)
   const nodesRef = useRef<CanvasNode[]>([])
+  const edgesRef = useRef<CanvasEdge[]>([])
   const reactFlowInstanceRef = useRef<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(
     null,
   )
   const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null)
   const isDraggingShape = dragPreview !== null
-  const { edges, nodes, onConnect, onDelete, onEdgesChange, onNodesChange } =
+  const { edges, nodes, onDelete, onEdgesChange, onNodesChange } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
       suspense: true,
       nodes: {
@@ -82,6 +91,10 @@ export function EditorCanvas() {
   useEffect(() => {
     nodesRef.current = nodes
   }, [nodes])
+
+  useEffect(() => {
+    edgesRef.current = edges
+  }, [edges])
 
   const handleNodeLabelChange = useCallback(
     (nodeId: string, label: string) => {
@@ -133,6 +146,65 @@ export function EditorCanvas() {
     [onNodesChange],
   )
 
+  const handleEdgeLabelChange = useCallback(
+    (edgeId: string, label: string) => {
+      const currentEdge = edgesRef.current.find((edge) => edge.id === edgeId)
+      const currentLabel = currentEdge?.data?.label ?? ""
+
+      if (!currentEdge || currentLabel === label) {
+        return
+      }
+
+      const change: EdgeChange<CanvasEdge> = {
+        id: edgeId,
+        type: "replace",
+        item: {
+          ...currentEdge,
+          data: {
+            ...(currentEdge.data ?? {}),
+            label,
+          },
+        },
+      }
+
+      onEdgesChange([change])
+    },
+    [onEdgesChange],
+  )
+
+  const handleConnect = useCallback<OnConnect>(
+    (connection) => {
+      const [newEdge] = addEdge<CanvasEdge>(
+        {
+          ...connection,
+          type: CANVAS_EDGE_TYPE,
+          data: {
+            label: "",
+          },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: "var(--text-primary)",
+          },
+          interactionWidth: 28,
+        },
+        [],
+      )
+
+      if (!newEdge) {
+        return
+      }
+
+      onEdgesChange([
+        {
+          type: "add",
+          item: newEdge,
+          index: edgesRef.current.length,
+        },
+      ])
+    },
+    [onEdgesChange],
+  )
+
   const nodeTypes = useMemo(
     () => ({
       [CANVAS_NODE_TYPE]: (props: NodeProps<CanvasNode>) => (
@@ -144,6 +216,27 @@ export function EditorCanvas() {
       ),
     }),
     [handleNodeColorChange, handleNodeLabelChange],
+  )
+
+  const edgeTypes = useMemo(
+    () => ({
+      [CANVAS_EDGE_TYPE]: (props: EdgeProps<CanvasEdge>) => (
+        <CanvasEdgeComponent {...props} onLabelChange={handleEdgeLabelChange} />
+      ),
+    }),
+    [handleEdgeLabelChange],
+  )
+
+  const defaultEdgeOptions = useMemo<DefaultEdgeOptions>(
+    () => ({
+      type: CANVAS_EDGE_TYPE,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: "var(--text-primary)",
+      },
+      interactionWidth: 28,
+    }),
+    [],
   )
 
   useEffect(() => {
@@ -246,7 +339,7 @@ export function EditorCanvas() {
       <ReactFlow<CanvasNode, CanvasEdge>
         nodes={nodes}
         edges={edges}
-        onConnect={onConnect}
+        onConnect={handleConnect}
         onDelete={onDelete}
         onEdgesChange={onEdgesChange}
         onNodesChange={onNodesChange}
@@ -256,6 +349,8 @@ export function EditorCanvas() {
         connectionMode={ConnectionMode.Loose}
         fitView
         className="bg-base"
+        defaultEdgeOptions={defaultEdgeOptions}
+        edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
       >
         <MiniMap<CanvasNode>
