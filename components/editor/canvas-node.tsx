@@ -218,6 +218,15 @@ export function CanvasNodeComponent({
                 stopCanvasInteraction(event)
                 setIsEditing(true)
               }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") {
+                  return
+                }
+
+                event.preventDefault()
+                stopCanvasInteraction(event)
+                setIsEditing(true)
+              }}
             >
               {label}
             </button>

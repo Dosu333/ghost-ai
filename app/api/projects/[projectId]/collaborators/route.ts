@@ -16,6 +16,18 @@ interface ProjectCollaboratorsRouteContext {
   }>
 }
 
+async function buildCollaboratorsResponse(
+  projectId: string,
+  canManageAccess: boolean
+) {
+  const collaborators = await getProjectAccessMembers(projectId)
+
+  return {
+    canManageAccess,
+    collaborators,
+  }
+}
+
 export async function GET(
   _request: Request,
   context: ProjectCollaboratorsRouteContext
@@ -34,12 +46,12 @@ export async function GET(
     return jsonError(404, "NOT_FOUND", "Project not found.")
   }
 
-  const collaborators = await getProjectAccessMembers(projectId)
+  const responseBody = await buildCollaboratorsResponse(
+    projectId,
+    project.role === "owner"
+  )
 
-  return Response.json({
-    canManageAccess: project.role === "owner",
-    collaborators,
-  })
+  return Response.json(responseBody)
 }
 
 export async function POST(
@@ -102,9 +114,9 @@ export async function POST(
     },
   })
 
-  const collaborators = await getProjectAccessMembers(projectId)
+  const responseBody = await buildCollaboratorsResponse(projectId, true)
 
-  return Response.json({ collaborators }, { status: 201 })
+  return Response.json(responseBody, { status: 201 })
 }
 
 export async function DELETE(

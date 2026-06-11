@@ -89,6 +89,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Starter template verification completed with `npx tsc --noEmit` locally and `npm run build` in a temporary repo copy after bypassing an existing root `.next` build lock.
 - Project creation now persists the validated client-provided project ID again, restoring the project ID to Liveblocks room ID invariant for newly created workspaces and returning a `409` conflict if that generated ID is already taken.
 - `app/api/liveblocks-auth` now syncs rooms with a single `upsertRoom` call and logs underlying Liveblocks initialization failures on the server instead of hiding every auth-path exception behind an uninspectable generic error.
+- The collaborators invite route now reuses the same response payload shape for both `GET` and `POST`, preserving the share dialog client contract while keeping `POST` at `201 Created`.
+- Canvas node labels now support keyboard activation for inline editing, so pressing `Enter` or `Space` on the label button mirrors the existing double-click edit behavior.
 
 ## In Progress
 
@@ -140,3 +142,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - The canvas ergonomics unit is now implemented and verified; `npx tsc --noEmit` passed locally, and `npm run build` passed after allowing network access for the existing `next/font/google` Geist and Geist Mono fetch.
 - The starter template unit is now implemented and verified; production build verification was completed from a temporary `/tmp` repo copy because another `next build` process in the root workspace held the existing `.next` lock.
 - The Liveblocks new-project auth regression is fixed by persisting the requested project ID during project creation and using `upsertRoom` for room initialization, which keeps fresh project workspaces aligned with the room IDs the client expects.
+- The collaborators route now builds a shared response body for `GET` and `POST`, fixing the share dialog invite flow without changing the client contract.
+- The canvas node label button now enters edit mode from keyboard activation as well as double-click, preserving button semantics while improving accessibility.
