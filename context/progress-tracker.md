@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Add AI generation controls on top of the collaborative canvas after the starter template import unit.
+- Add AI generation controls on top of the collaborative canvas after the presence unit.
 
 ## Completed
 
@@ -91,6 +91,16 @@ Update this file whenever the current phase, active feature, or implementation s
 - `app/api/liveblocks-auth` now syncs rooms with a single `upsertRoom` call and logs underlying Liveblocks initialization failures on the server instead of hiding every auth-path exception behind an uninspectable generic error.
 - The collaborators invite route now reuses the same response payload shape for both `GET` and `POST`, preserving the share dialog client contract while keeping `POST` at `201 Created`.
 - Canvas node labels now support keyboard activation for inline editing, so pressing `Enter` or `Space` on the label button mirrors the existing double-click edit behavior.
+- Presence avatars now render only inside project canvas rooms as a top-right overlay, showing collaborator-only Liveblocks avatars plus the current user's Clerk `UserButton`.
+- The canvas presence overlay now collapses to just the Clerk `UserButton` when no collaborators are present and adds a conditional divider plus `+N` overflow chip when collaborators exceed five visible avatars.
+- Live cursor broadcasting is now wired through room presence updates on React Flow mouse move and leave events, and the canvas renders colored collaborator cursors with attached name badges for other participants only.
+- Presence overlay verification completed with `npx tsc --noEmit` and `npm run build`; production build still required the existing Next.js font/network allowance outside the sandbox.
+- Liveblocks user metadata now includes collaborator email fallback, so presence cursors and avatar initials show the collaborator's email when no Clerk name or username is available.
+- Cursor presence updates now stay in sync while collaborators drag nodes or multi-selections because the canvas feeds React Flow drag callbacks through the same cursor position updater used for pointer hover.
+- Presence follow-up verification completed with `npx tsc --noEmit` and `npm run build`; build verification again required the existing `next/font/google` network allowance outside the sandbox.
+- Collaborative cursor presence now stores shared flow-space coordinates instead of local screen pixels, so collaborator cursors stay aligned across different zoom levels and pan offsets.
+- The cursor overlay now reprojects remote flow-space cursors through the local React Flow viewport on every viewport move, keeping cursor placement accurate while users pan or zoom independently.
+- Cursor coordinate follow-up verification completed with `npx tsc --noEmit` and `npm run build`; build verification again required the existing `next/font/google` network allowance outside the sandbox.
 
 ## In Progress
 
@@ -98,7 +108,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Resume the AI generation controls unit on top of the collaborative canvas after starter template import is complete.
+- Resume the AI generation controls unit on top of the collaborative canvas.
 
 ## Open Questions
 
@@ -144,3 +154,6 @@ Update this file whenever the current phase, active feature, or implementation s
 - The Liveblocks new-project auth regression is fixed by persisting the requested project ID during project creation and using `upsertRoom` for room initialization, which keeps fresh project workspaces aligned with the room IDs the client expects.
 - The collaborators route now builds a shared response body for `GET` and `POST`, fixing the share dialog invite flow without changing the client contract.
 - The canvas node label button now enters edit mode from keyboard activation as well as double-click, preserving button semantics while improving accessibility.
+- The presence avatars and cursors unit is now implemented and verified; the only escalation needed for final build validation was the existing `next/font/google` network fetch in the shared app shell.
+- The presence follow-up is now implemented and verified; unnamed collaborators fall back to email in Liveblocks user info, and drag interactions now keep collaborator cursors moving with node and selection drags.
+- The cursor coordinate follow-up is now implemented and verified; cursor presence uses shared flow coordinates and renders accurately even when collaborators have different zoom levels or viewport positions.

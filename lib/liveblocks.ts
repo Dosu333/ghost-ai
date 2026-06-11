@@ -47,6 +47,7 @@ export function getLiveblocksCursorColor(userId: string) {
 
 export interface LiveblocksUserInfo {
   color: string
+  email?: string
   name: string
   avatar?: string
 }

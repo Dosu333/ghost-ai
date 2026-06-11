@@ -8,7 +8,7 @@ declare global {
         x: number
         y: number
       } | null
-      isThinking: boolean
+      thinking: boolean
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
@@ -19,6 +19,7 @@ declare global {
       id: string;
       info: {
         name: string
+        email?: string
         avatar?: string
         color: string
       };

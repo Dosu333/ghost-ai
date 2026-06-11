@@ -120,7 +120,7 @@ export function EditorRoomCanvas({
         id={roomId}
         initialPresence={{
           cursor: null,
-          isThinking: false,
+          thinking: false,
         }}
       >
         <CanvasConnectionGuard templateImportRequest={templateImportRequest} />

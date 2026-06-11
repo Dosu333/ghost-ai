@@ -17,6 +17,7 @@ import {
 } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
 import {
+  type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -28,11 +29,13 @@ import {
   useCanUndo,
   useRedo,
   useUndo,
+  useUpdateMyPresence,
 } from "@liveblocks/react/suspense"
 
 import { CanvasControlBar } from "@/components/editor/canvas-control-bar"
 import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
+import { CanvasPresenceOverlay } from "@/components/editor/canvas-presence-overlay"
 import { CanvasShape } from "@/components/editor/canvas-shape"
 import { ShapePanel } from "@/components/editor/shape-panel"
 import type { CanvasTemplate } from "@/components/editor/starter-templates"
@@ -76,6 +79,32 @@ function parseShapeDragPayload(
   }
 }
 
+function getEventClientPosition(
+  event:
+    | MouseEvent
+    | TouchEvent
+    | ReactMouseEvent<HTMLDivElement>
+    | ReactMouseEvent<Element>
+) {
+  if ("touches" in event) {
+    const touch = event.touches[0] ?? event.changedTouches[0]
+
+    if (!touch) {
+      return null
+    }
+
+    return {
+      x: touch.clientX,
+      y: touch.clientY,
+    }
+  }
+
+  return {
+    x: event.clientX,
+    y: event.clientY,
+  }
+}
+
 interface DragPreviewState {
   cursorX: number
   cursorY: number
@@ -94,6 +123,7 @@ interface EditorCanvasProps {
 export function EditorCanvas({
   templateImportRequest = null,
 }: EditorCanvasProps) {
+  const canvasWrapperRef = useRef<HTMLDivElement | null>(null)
   const nodeIdCounterRef = useRef(0)
   const nodesRef = useRef<CanvasNode[]>([])
   const edgesRef = useRef<CanvasEdge[]>([])
@@ -103,11 +133,13 @@ export function EditorCanvas({
   const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null)
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null)
+  const [viewportVersion, setViewportVersion] = useState(0)
   const isDraggingShape = dragPreview !== null
   const undo = useUndo()
   const redo = useRedo()
   const canUndo = useCanUndo()
   const canRedo = useCanRedo()
+  const updateMyPresence = useUpdateMyPresence()
   const { edges, nodes, onDelete, onEdgesChange, onNodesChange } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
       suspense: true,
@@ -407,8 +439,82 @@ export function EditorCanvas({
     }
   }, [isDraggingShape])
 
+  useEffect(() => {
+    return () => {
+      updateMyPresence({ cursor: null })
+    }
+  }, [updateMyPresence])
+
+  const updatePresenceCursor = useCallback(
+    (clientX: number, clientY: number) => {
+      const instance = reactFlowInstanceRef.current
+
+      if (!instance) {
+        return
+      }
+
+      const flowPosition = instance.screenToFlowPosition({
+        x: clientX,
+        y: clientY,
+      })
+
+      updateMyPresence({
+        cursor: flowPosition,
+      })
+    },
+    [updateMyPresence],
+  )
+
+  const handleCanvasMouseMove = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      const position = getEventClientPosition(event)
+
+      if (!position) {
+        return
+      }
+
+      updatePresenceCursor(position.x, position.y)
+    },
+    [updatePresenceCursor],
+  )
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    updateMyPresence({ cursor: null })
+  }, [updateMyPresence])
+
+  const handleNodeDrag = useCallback(
+    (event: MouseEvent | TouchEvent, _node: CanvasNode) => {
+      const position = getEventClientPosition(event)
+
+      if (!position) {
+        return
+      }
+
+      updatePresenceCursor(position.x, position.y)
+    },
+    [updatePresenceCursor],
+  )
+
+  const handleSelectionDrag = useCallback(
+    (event: ReactMouseEvent<Element>, _nodes: CanvasNode[]) => {
+      const position = getEventClientPosition(event)
+
+      if (!position) {
+        return
+      }
+
+      updatePresenceCursor(position.x, position.y)
+    },
+    [updatePresenceCursor],
+  )
+
+  const handleViewportMove = useCallback(() => {
+    setViewportVersion((currentVersion) => currentVersion + 1)
+  }, [])
+
   return (
     <div
+      ref={canvasWrapperRef}
       className="relative h-full w-full"
       onDragOver={(event) => {
         if (
@@ -476,6 +582,11 @@ export function EditorCanvas({
           reactFlowInstanceRef.current = instance
           setReactFlowInstance(instance)
         }}
+        onMouseMove={handleCanvasMouseMove}
+        onMouseLeave={handleCanvasMouseLeave}
+        onNodeDrag={handleNodeDrag}
+        onSelectionDrag={handleSelectionDrag}
+        onMove={handleViewportMove}
         connectionMode={ConnectionMode.Loose}
         fitView
         className="bg-base"
@@ -490,6 +601,11 @@ export function EditorCanvas({
           variant={BackgroundVariant.Dots}
         />
       </ReactFlow>
+      <CanvasPresenceOverlay
+        canvasElement={canvasWrapperRef.current}
+        reactFlowInstance={reactFlowInstance}
+        viewportVersion={viewportVersion}
+      />
       {dragPreview ? (
         <div
           className="pointer-events-none fixed left-0 top-0 z-20 opacity-90"

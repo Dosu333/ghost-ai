@@ -31,6 +31,18 @@ function getUserDisplayName(user: Awaited<ReturnType<typeof currentUser>>) {
   return user.username || null
 }
 
+function getUserPrimaryEmail(user: Awaited<ReturnType<typeof currentUser>>) {
+  if (!user) {
+    return null
+  }
+
+  return (
+    user.emailAddresses.find(
+      (emailAddress) => emailAddress.id === user.primaryEmailAddressId
+    )?.emailAddress ?? null
+  )
+}
+
 async function parseLiveblocksAuthBody(request: Request) {
   let body: LiveblocksAuthBody
 
@@ -82,9 +94,11 @@ async function parseLiveblocksAuthBody(request: Request) {
 
 async function buildLiveblocksUserInfo(userId: string): Promise<LiveblocksUserInfo> {
   const user = await currentUser().catch(() => null)
-  const name = getUserDisplayName(user) ?? "Ghost AI user"
+  const primaryEmail = getUserPrimaryEmail(user)
+  const name = getUserDisplayName(user) ?? primaryEmail ?? "Ghost AI user"
 
   return {
+    ...(primaryEmail ? { email: primaryEmail } : {}),
     ...(user?.imageUrl ? { avatar: user.imageUrl } : {}),
     color: getLiveblocksCursorColor(userId),
     name,
