@@ -9,9 +9,10 @@ import {
   type ReactFlowInstance,
 } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
+import { CanvasShape } from "@/components/editor/canvas-shape"
 import { ShapePanel } from "@/components/editor/shape-panel"
 import type { CanvasEdge, CanvasNode } from "@/types/canvas"
 import {
@@ -54,11 +55,19 @@ function parseShapeDragPayload(
   }
 }
 
+interface DragPreviewState {
+  cursorX: number
+  cursorY: number
+  payload: CanvasShapeDragPayload
+}
+
 export function EditorCanvas() {
   const nodeIdCounterRef = useRef(0)
   const reactFlowInstanceRef = useRef<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(
     null,
   )
+  const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null)
+  const isDraggingShape = dragPreview !== null
   const { edges, nodes, onConnect, onDelete, onEdgesChange, onNodesChange } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
       suspense: true,
@@ -70,11 +79,52 @@ export function EditorCanvas() {
       },
     })
 
+  useEffect(() => {
+    if (!isDraggingShape) {
+      return
+    }
+
+    function handleWindowDragOver(event: DragEvent) {
+      if (
+        !event.dataTransfer ||
+        !Array.from(event.dataTransfer.types).includes(SHAPE_DRAG_MIME_TYPE)
+      ) {
+        return
+      }
+
+      setDragPreview((currentPreview) =>
+        currentPreview
+          ? {
+              ...currentPreview,
+              cursorX: event.clientX,
+              cursorY: event.clientY,
+            }
+          : currentPreview,
+      )
+    }
+
+    function clearDragPreview() {
+      setDragPreview(null)
+    }
+
+    window.addEventListener("dragover", handleWindowDragOver)
+    window.addEventListener("drop", clearDragPreview)
+    window.addEventListener("dragend", clearDragPreview)
+
+    return () => {
+      window.removeEventListener("dragover", handleWindowDragOver)
+      window.removeEventListener("drop", clearDragPreview)
+      window.removeEventListener("dragend", clearDragPreview)
+    }
+  }, [isDraggingShape])
+
   return (
     <div
       className="relative h-full w-full"
       onDragOver={(event) => {
-        if (!event.dataTransfer.types.includes(SHAPE_DRAG_MIME_TYPE)) {
+        if (
+          !Array.from(event.dataTransfer.types).includes(SHAPE_DRAG_MIME_TYPE)
+        ) {
           return
         }
 
@@ -92,6 +142,7 @@ export function EditorCanvas() {
         }
 
         event.preventDefault()
+        setDragPreview(null)
 
         nodeIdCounterRef.current += 1
 
@@ -159,7 +210,34 @@ export function EditorCanvas() {
           variant={BackgroundVariant.Dots}
         />
       </ReactFlow>
-      <ShapePanel />
+      {dragPreview ? (
+        <div
+          className="pointer-events-none fixed left-0 top-0 z-20 opacity-90"
+          style={{
+            transform: `translate(${dragPreview.cursorX - dragPreview.payload.width / 2}px, ${dragPreview.cursorY - dragPreview.payload.height / 2}px)`,
+          }}
+        >
+          <CanvasShape
+            color={DEFAULT_NODE_COLOR}
+            shape={dragPreview.payload.shape}
+            width={dragPreview.payload.width}
+            height={dragPreview.payload.height}
+            label={<span className="text-sm font-medium leading-5 tracking-tight"> </span>}
+          />
+        </div>
+      ) : null}
+      <ShapePanel
+        onDragStart={(payload, cursorPosition) => {
+          setDragPreview({
+            payload,
+            cursorX: cursorPosition.x,
+            cursorY: cursorPosition.y,
+          })
+        }}
+        onDragEnd={() => {
+          setDragPreview(null)
+        }}
+      />
     </div>
   )
 }

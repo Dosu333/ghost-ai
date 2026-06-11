@@ -8,6 +8,7 @@ import {
   RectangleHorizontal,
   Workflow,
 } from "lucide-react"
+import { type DragEvent, useRef } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,7 +19,11 @@ import {
 } from "@/types/canvas"
 
 interface ShapePanelProps {
-  onDragStart?: (shape: CanvasShapeDragPayload) => void
+  onDragEnd?: () => void
+  onDragStart?: (
+    shape: CanvasShapeDragPayload,
+    cursorPosition: { x: number; y: number },
+  ) => void
 }
 
 const SHAPE_ITEMS: Array<{
@@ -58,7 +63,32 @@ const SHAPE_ITEMS: Array<{
   },
 ]
 
-export function ShapePanel({ onDragStart }: ShapePanelProps) {
+const transparentDragImageDataUrl =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+
+export function ShapePanel({ onDragEnd, onDragStart }: ShapePanelProps) {
+  const transparentDragImageRef = useRef<HTMLImageElement | null>(null)
+
+  function handleDragStart(
+    event: DragEvent<HTMLButtonElement>,
+    payload: CanvasShapeDragPayload,
+  ) {
+    if (!transparentDragImageRef.current) {
+      const image = new Image()
+      image.src = transparentDragImageDataUrl
+      transparentDragImageRef.current = image
+    }
+
+    event.dataTransfer.effectAllowed = "move"
+    event.dataTransfer.setData(SHAPE_DRAG_MIME_TYPE, JSON.stringify(payload))
+    event.dataTransfer.setDragImage(transparentDragImageRef.current, 0, 0)
+
+    onDragStart?.(payload, {
+      x: event.clientX,
+      y: event.clientY,
+    })
+  }
+
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4">
       <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-surface-border bg-surface/92 px-3 py-2 shadow-2xl shadow-black/25 backdrop-blur-md">
@@ -71,19 +101,16 @@ export function ShapePanel({ onDragStart }: ShapePanelProps) {
             className="size-11 rounded-full border border-transparent bg-transparent text-copy-secondary hover:border-surface-border hover:bg-elevated hover:text-copy-primary"
             aria-label={`Drag ${label} shape`}
             title={label}
+            onDragEnd={() => {
+              onDragEnd?.()
+            }}
             onDragStart={(event) => {
               const payload: CanvasShapeDragPayload = {
                 shape,
                 ...SHAPE_DEFAULT_SIZES[shape],
               }
 
-              event.dataTransfer.effectAllowed = "move"
-              event.dataTransfer.setData(
-                SHAPE_DRAG_MIME_TYPE,
-                JSON.stringify(payload),
-              )
-
-              onDragStart?.(payload)
+              handleDragStart(event, payload)
             }}
           >
             <Icon className="h-5 w-5" />

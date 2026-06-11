@@ -64,8 +64,10 @@ Update this file whenever the current phase, active feature, or implementation s
 - The editor canvas now includes a floating bottom shape panel with draggable entries for rectangle, diamond, circle, pill, cylinder, and hexagon.
 - Shape drag payloads now include the supported shape name plus sensible default width and height data, and the canvas drop flow creates synced custom canvas nodes at the dropped React Flow position.
 - A basic custom `canvasNode` renderer now displays newly dropped nodes as bordered rectangles with centered labels so shape-created nodes are immediately visible on the collaborative canvas.
+- The custom `canvasNode` renderer now draws all six supported shape variants, using CSS for rectangle, pill, and circle plus scalable SVG rendering for diamond, hexagon, and cylinder.
+- Shape dragging now shows a cursor-following ghost preview that matches the dragged shape and default drop size, then clears cleanly on drop or cancel.
 - The project workspace canvas now renders as a full-bleed editor surface with no rounded outer frame, while the AI panel floats as a right-side overlay instead of reserving canvas width.
-- Verification completed for this unit with both `npx tsc --noEmit` and `npm run build`.
+- Verification completed for the shape-panel unit with both `npx tsc --noEmit` and `npm run build`.
 
 ## In Progress
 
@@ -73,7 +75,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Add AI generation controls on top of the collaborative canvas now that the shape-panel drop flow is in place.
+- Add AI generation controls on top of the collaborative canvas now that node creation and shape rendering are in place.
 
 ## Open Questions
 
@@ -108,3 +110,4 @@ Update this file whenever the current phase, active feature, or implementation s
 - The base-canvas unit expects the client provider to authenticate by room ID, so `/api/liveblocks-auth` should accept the provider-posted room payload while preserving the project ID to room ID invariant.
 - The shape-panel unit is now implemented and verified; `npm run build` passed after allowing the existing Next.js font fetch used by the shared Geist setup.
 - The workspace shell now treats the canvas as the base layer for project routes, so both side panels can hover above it without shrinking the collaborative surface.
+- The node-shape unit is now implemented with reusable shape rendering and drag ghost behavior; `npx tsc --noEmit` passes locally, while `npm run build` still depends on allowing the existing `next/font/google` Geist fetch outside the sandbox.
