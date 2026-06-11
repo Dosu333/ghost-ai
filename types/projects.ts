@@ -1,0 +1,11 @@
+export interface EditorProject {
+  id: string
+  name: string
+  role: "owner" | "collaborator"
+}
+
+export interface ProjectCollaborator {
+  avatarImageUrl: string | null
+  displayName: string | null
+  email: string
+}
