@@ -1,6 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server"
 
 import { prisma } from "@/lib/prisma"
+import { normalizeCollaboratorEmail } from "@/lib/project-collaborators"
 
 export interface ProjectAccessIdentity {
   primaryEmail: string | null
@@ -31,7 +32,7 @@ export async function getCurrentProjectIdentity(): Promise<ProjectAccessIdentity
       )?.emailAddress ?? null
 
     return {
-      primaryEmail,
+      primaryEmail: primaryEmail ? normalizeCollaboratorEmail(primaryEmail) : null,
       userId,
     }
   } catch {
@@ -80,7 +81,7 @@ export async function getProjectAccess(
   const collaboratorMatch = await prisma.projectCollaborator.findFirst({
     where: {
       projectId,
-      collaboratorEmail: identity.primaryEmail,
+      collaboratorEmail: normalizeCollaboratorEmail(identity.primaryEmail),
     },
     select: {
       id: true,

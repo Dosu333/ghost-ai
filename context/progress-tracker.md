@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Move from the project-scoped workspace shell into the first real canvas implementation and AI sidebar behavior.
+- Move from workspace shell management features into the first real canvas implementation and AI sidebar behavior.
 
 ## Completed
 
@@ -52,6 +52,9 @@ Update this file whenever the current phase, active feature, or implementation s
 - `/editor/[projectId]` now stays server-rendered, redirects unauthenticated users to Clerk sign-in, and renders `AccessDenied` for missing or unauthorized projects.
 - The project workspace route now renders the editor shell with the active project name in the navbar, left sidebar highlighting, a central canvas placeholder, and a right AI sidebar placeholder.
 - `components/editor/access-denied.tsx` now provides the locked access state with a return link to `/editor`.
+- Share management is now implemented through `app/api/projects/[projectId]/collaborators`, covering collaborator listing, owner-only invite, and owner-only removal.
+- Collaborator API responses now enrich stored emails with Clerk display names and avatar images when available, while falling back to email-only entries when a Clerk user is not found.
+- The workspace `Share` button now opens a dedicated dialog where owners can invite, remove, and copy the project link with temporary `Copied!` feedback, while collaborators see a read-only collaborator list.
 - Clerk auth page form appearance is now shared through `lib/clerk.ts`, so sign-in and sign-up stay visually aligned without duplicated inline config.
 - Verification completed for this unit with both `npx tsc --noEmit` and `npm run build`.
 
@@ -61,7 +64,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Start the real project canvas implementation inside `/editor/[projectId]`, then wire the AI sidebar to actual generation flows.
+- Start the real project canvas implementation inside `/editor/[projectId]`, then replace the AI placeholder sidebar with actual generation flows.
 
 ## Open Questions
 
@@ -87,6 +90,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - `npx tsc --noEmit` and `npm run build` both pass for the workspace-shell implementation once the existing `next/font/google` Geist fetch is allowed.
 - The editor project helpers now fall back cleanly when Clerk's backend `currentUser()` fetch fails, preventing shared-project lookup issues from crashing owner route renders.
 - The workspace-shell feature is now implemented and verified; the only build escalation required was the existing `next/font/google` Geist fetch.
+- Share dialog implementation now includes owner-only collaborator management, Clerk-enriched collaborator identity display, and copy-link feedback inside the project workspace.
 - The duplicated Clerk auth form `appearance` config was consolidated into a shared export and will be covered by follow-up type-check validation for this small refactor.
 - Prisma client initialization is now lazy, so build-time or import-only evaluation no longer throws before a real database call requests the client.
 - Clerk public route matching now includes `/`, preventing proxy auth protection from intercepting the home route before its redirect logic runs.

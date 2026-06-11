@@ -3,3 +3,9 @@ export interface EditorProject {
   name: string
   role: "owner" | "collaborator"
 }
+
+export interface ProjectCollaborator {
+  avatarImageUrl: string | null
+  displayName: string | null
+  email: string
+}

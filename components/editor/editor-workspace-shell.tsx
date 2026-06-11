@@ -7,6 +7,7 @@ import { useState } from "react"
 import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { ProjectDialogs } from "@/components/editor/project-dialogs"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
+import { ShareDialog } from "@/components/editor/share-dialog"
 import { Button } from "@/components/ui/button"
 import { useProjectActions } from "@/hooks/use-project-actions"
 import type { EditorProject } from "@/types/projects"
@@ -24,6 +25,7 @@ export function EditorWorkspaceShell({
 }: EditorWorkspaceShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true)
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const {
     activeDialog,
     closeDialog,
@@ -59,6 +61,7 @@ export function EditorWorkspaceShell({
                   variant="outline"
                   className="rounded-xl border-surface-border bg-elevated/80 text-copy-secondary hover:bg-subtle hover:text-copy-primary"
                   type="button"
+                  onClick={() => setIsShareDialogOpen(true)}
                 >
                   <Share2 className="h-4 w-4" />
                   Share
@@ -182,6 +185,16 @@ export function EditorWorkspaceShell({
         onRenameSubmit={submitRenameProject}
         onDeleteSubmit={submitDeleteProject}
       />
+
+      {workspaceProject ? (
+        <ShareDialog
+          isOpen={isShareDialogOpen}
+          onOpenChange={setIsShareDialogOpen}
+          projectId={workspaceProject.id}
+          projectName={workspaceProject.name}
+          projectRole={workspaceProject.role}
+        />
+      ) : null}
     </main>
   )
 }
