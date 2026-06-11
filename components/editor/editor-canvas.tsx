@@ -35,6 +35,7 @@ import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
 import { CanvasShape } from "@/components/editor/canvas-shape"
 import { ShapePanel } from "@/components/editor/shape-panel"
+import type { CanvasTemplate } from "@/components/editor/starter-templates"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import type { CanvasEdge, CanvasNode } from "@/types/canvas"
 import {
@@ -83,12 +84,22 @@ interface DragPreviewState {
 
 const VIEWPORT_ANIMATION_DURATION_MS = 180
 
-export function EditorCanvas() {
+interface EditorCanvasProps {
+  templateImportRequest?: {
+    requestId: number
+    template: CanvasTemplate
+  } | null
+}
+
+export function EditorCanvas({
+  templateImportRequest = null,
+}: EditorCanvasProps) {
   const nodeIdCounterRef = useRef(0)
   const nodesRef = useRef<CanvasNode[]>([])
   const edgesRef = useRef<CanvasEdge[]>([])
   const reactFlowInstanceRef =
     useRef<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null)
+  const lastImportedTemplateRequestIdRef = useRef<number | null>(null)
   const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null)
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null)
@@ -115,6 +126,64 @@ export function EditorCanvas() {
   useEffect(() => {
     edgesRef.current = edges
   }, [edges])
+
+  useEffect(() => {
+    if (!templateImportRequest) {
+      return
+    }
+
+    if (lastImportedTemplateRequestIdRef.current === templateImportRequest.requestId) {
+      return
+    }
+
+    lastImportedTemplateRequestIdRef.current = templateImportRequest.requestId
+
+    const currentEdges = edgesRef.current
+    const currentNodes = nodesRef.current
+
+    if (currentEdges.length > 0) {
+      onEdgesChange(
+        currentEdges.map((edge) => ({
+          id: edge.id,
+          type: "remove" as const,
+        })),
+      )
+    }
+
+    if (currentNodes.length > 0) {
+      onNodesChange(
+        currentNodes.map((node) => ({
+          id: node.id,
+          type: "remove" as const,
+        })),
+      )
+    }
+
+    onNodesChange(
+      templateImportRequest.template.nodes.map((node, index) => ({
+        type: "add" as const,
+        item: node,
+        index,
+      })),
+    )
+
+    onEdgesChange(
+      templateImportRequest.template.edges.map((edge, index) => ({
+        type: "add" as const,
+        item: edge,
+        index,
+      })),
+    )
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        void reactFlowInstanceRef.current?.fitView({
+          duration: VIEWPORT_ANIMATION_DURATION_MS,
+          padding: 0.18,
+        })
+      })
+    })
+  }, [onEdgesChange, onNodesChange, templateImportRequest])
 
   const handleZoomIn = useCallback(() => {
     void reactFlowInstance?.zoomIn({

@@ -1,5 +1,4 @@
 import { currentUser } from "@clerk/nextjs/server"
-import { LiveblocksError } from "@liveblocks/node"
 
 import {
   LiveblocksUserInfo,
@@ -100,31 +99,38 @@ async function ensureProjectRoom(projectId: string, projectName: string, userIds
     usersAccesses[userId] = ["room:write"]
   }
 
-  try {
-    await liveblocks.getRoom(projectId)
-    await liveblocks.updateRoom(projectId, {
+  await liveblocks.upsertRoom(projectId, {
+    update: {
       defaultAccesses: [],
       metadata: {
         projectId,
         title: projectName,
       },
       usersAccesses,
-    })
-    return
-  } catch (error) {
-    if (!(error instanceof LiveblocksError) || error.status !== 404) {
-      throw error
+    },
+    create: {
+      defaultAccesses: [],
+      metadata: {
+        projectId,
+        title: projectName,
+      },
+      usersAccesses,
+    },
+  })
+}
+
+function getLiveblocksErrorDetails(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
     }
   }
 
-  await liveblocks.getOrCreateRoom(projectId, {
-    defaultAccesses: [],
-    metadata: {
-      projectId,
-      title: projectName,
-    },
-    usersAccesses,
-  })
+  return {
+    value: String(error),
+  }
 }
 
 export async function POST(request: Request) {
@@ -170,7 +176,13 @@ export async function POST(request: Request) {
     )
 
     return new Response(body, { status })
-  } catch {
+  } catch (error) {
+    console.error("Failed to initialize Liveblocks access.", {
+      projectId: bodyResult.projectId,
+      userId: authResult.userId,
+      details: getLiveblocksErrorDetails(error),
+    })
+
     return jsonError(
       500,
       "LIVEBLOCKS_AUTH_FAILED",

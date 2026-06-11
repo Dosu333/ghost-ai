@@ -1,7 +1,7 @@
 "use client"
 
 import { UserButton } from "@clerk/nextjs"
-import { Plus, Share2, Sparkles } from "lucide-react"
+import { LayoutTemplate, Plus, Share2, Sparkles } from "lucide-react"
 import { useState } from "react"
 
 import { EditorRoomCanvas } from "@/components/editor/editor-room-canvas"
@@ -9,6 +9,11 @@ import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { ProjectDialogs } from "@/components/editor/project-dialogs"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
 import { ShareDialog } from "@/components/editor/share-dialog"
+import {
+  CANVAS_TEMPLATES,
+  type CanvasTemplate,
+} from "@/components/editor/starter-templates"
+import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal"
 import { Button } from "@/components/ui/button"
 import { useProjectActions } from "@/hooks/use-project-actions"
 import type { EditorProject } from "@/types/projects"
@@ -27,6 +32,11 @@ export function EditorWorkspaceShell({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [isStarterTemplatesOpen, setIsStarterTemplatesOpen] = useState(false)
+  const [templateImportRequest, setTemplateImportRequest] = useState<{
+    requestId: number
+    template: CanvasTemplate
+  } | null>(null)
   const {
     activeDialog,
     closeDialog,
@@ -58,6 +68,15 @@ export function EditorWorkspaceShell({
           <>
             {isProjectWorkspace ? (
               <>
+                <Button
+                  variant="outline"
+                  className="rounded-xl border-surface-border bg-elevated/80 text-copy-secondary hover:bg-subtle hover:text-copy-primary"
+                  type="button"
+                  onClick={() => setIsStarterTemplatesOpen(true)}
+                >
+                  <LayoutTemplate className="h-4 w-4" />
+                  Templates
+                </Button>
                 <Button
                   variant="outline"
                   className="rounded-xl border-surface-border bg-elevated/80 text-copy-secondary hover:bg-subtle hover:text-copy-primary"
@@ -160,7 +179,10 @@ export function EditorWorkspaceShell({
           {isProjectWorkspace ? (
             <div className="h-[calc(100vh-4rem)] w-full">
               <section className="h-full w-full overflow-hidden">
-                <EditorRoomCanvas roomId={workspaceProject.id} />
+                <EditorRoomCanvas
+                  roomId={workspaceProject.id}
+                  templateImportRequest={templateImportRequest}
+                />
               </section>
             </div>
           ) : (
@@ -197,13 +219,26 @@ export function EditorWorkspaceShell({
       />
 
       {workspaceProject ? (
-        <ShareDialog
-          isOpen={isShareDialogOpen}
-          onOpenChange={setIsShareDialogOpen}
-          projectId={workspaceProject.id}
-          projectName={workspaceProject.name}
-          projectRole={workspaceProject.role}
-        />
+        <>
+          <ShareDialog
+            isOpen={isShareDialogOpen}
+            onOpenChange={setIsShareDialogOpen}
+            projectId={workspaceProject.id}
+            projectName={workspaceProject.name}
+            projectRole={workspaceProject.role}
+          />
+          <StarterTemplatesModal
+            isOpen={isStarterTemplatesOpen}
+            onOpenChange={setIsStarterTemplatesOpen}
+            templates={CANVAS_TEMPLATES}
+            onImport={(template) => {
+              setTemplateImportRequest({
+                requestId: Date.now(),
+                template,
+              })
+            }}
+          />
+        </>
       ) : null}
     </main>
   )

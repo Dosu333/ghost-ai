@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Add AI generation controls on top of the collaborative canvas after the ergonomics and edge-behaviour units.
+- Add AI generation controls on top of the collaborative canvas after the starter template import unit.
 
 ## Completed
 
@@ -82,6 +82,13 @@ Update this file whenever the current phase, active feature, or implementation s
 - Canvas zoom controls now call the active React Flow instance with short animated transitions, and the minimap has been removed from the workspace.
 - Keyboard shortcut handling now lives in `hooks/use-keyboard-shortcuts`, covering `+`, `=`, `-`, `Cmd/Ctrl + Z`, `Cmd/Ctrl + Shift + Z`, and `Cmd/Ctrl + Y` while skipping editable inputs, textareas, and contenteditable fields.
 - Canvas ergonomics verification completed with `npx tsc --noEmit` and `npm run build`.
+- Starter template data now lives in `components/editor/starter-templates.ts`, using shared canvas node and edge types plus the existing node color palette.
+- The workspace now includes a starter templates modal with scrollable template cards, lightweight diagram previews, and per-template import actions.
+- The editor navbar now exposes a `Templates` entry point for project workspaces.
+- Starter template imports now replace the current collaborative canvas by removing existing nodes and edges, adding the selected template graph through the existing Liveblocks React Flow state, and fitting the view afterward.
+- Starter template verification completed with `npx tsc --noEmit` locally and `npm run build` in a temporary repo copy after bypassing an existing root `.next` build lock.
+- Project creation now persists the validated client-provided project ID again, restoring the project ID to Liveblocks room ID invariant for newly created workspaces and returning a `409` conflict if that generated ID is already taken.
+- `app/api/liveblocks-auth` now syncs rooms with a single `upsertRoom` call and logs underlying Liveblocks initialization failures on the server instead of hiding every auth-path exception behind an uninspectable generic error.
 
 ## In Progress
 
@@ -89,7 +96,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Start the AI generation controls unit on top of the collaborative canvas.
+- Resume the AI generation controls unit on top of the collaborative canvas after starter template import is complete.
 
 ## Open Questions
 
@@ -131,3 +138,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - The node-colors toolbar unit is now implemented and verified; the workspace build lock was avoided by verifying `npm run build` from a temporary `/tmp/ghost-ai-verify` copy while keeping the same source changes.
 - The edge-behaviour unit is implemented and type-checked locally; the remaining production build verification is currently blocked only by the existing `next/font/google` Geist and Geist Mono fetch during `npm run build`.
 - The canvas ergonomics unit is now implemented and verified; `npx tsc --noEmit` passed locally, and `npm run build` passed after allowing network access for the existing `next/font/google` Geist and Geist Mono fetch.
+- The starter template unit is now implemented and verified; production build verification was completed from a temporary `/tmp` repo copy because another `next build` process in the root workspace held the existing `.next` lock.
+- The Liveblocks new-project auth regression is fixed by persisting the requested project ID during project creation and using `upsertRoom` for room initialization, which keeps fresh project workspaces aligned with the room IDs the client expects.

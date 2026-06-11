@@ -11,9 +11,14 @@ import { useState } from "react"
 
 import { CanvasErrorBoundary } from "@/components/editor/canvas-error-boundary"
 import { EditorCanvas } from "@/components/editor/editor-canvas"
+import type { CanvasTemplate } from "@/components/editor/starter-templates"
 
 interface EditorRoomCanvasProps {
   roomId: string
+  templateImportRequest?: {
+    requestId: number
+    template: CanvasTemplate
+  } | null
 }
 
 interface CanvasConnectionError {
@@ -52,7 +57,11 @@ function CanvasLoadingState() {
   )
 }
 
-function CanvasConnectionGuard() {
+function CanvasConnectionGuard({
+  templateImportRequest,
+}: {
+  templateImportRequest: EditorRoomCanvasProps["templateImportRequest"]
+}) {
   const [connectionError, setConnectionError] =
     useState<CanvasConnectionError | null>(null)
 
@@ -95,13 +104,16 @@ function CanvasConnectionGuard() {
       }
     >
       <ClientSideSuspense fallback={<CanvasLoadingState />}>
-        {() => <EditorCanvas />}
+        {() => <EditorCanvas templateImportRequest={templateImportRequest} />}
       </ClientSideSuspense>
     </CanvasErrorBoundary>
   )
 }
 
-export function EditorRoomCanvas({ roomId }: EditorRoomCanvasProps) {
+export function EditorRoomCanvas({
+  roomId,
+  templateImportRequest = null,
+}: EditorRoomCanvasProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <RoomProvider
@@ -111,7 +123,7 @@ export function EditorRoomCanvas({ roomId }: EditorRoomCanvasProps) {
           isThinking: false,
         }}
       >
-        <CanvasConnectionGuard />
+        <CanvasConnectionGuard templateImportRequest={templateImportRequest} />
       </RoomProvider>
     </LiveblocksProvider>
   )
