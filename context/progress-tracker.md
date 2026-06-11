@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Phase 3: Authentication complete
+- Phase 4: Realtime collaboration foundation
 
 ## Current Goal
 
-- Move from workspace shell management features into the first real canvas implementation and AI sidebar behavior.
+- Add AI generation controls on top of the collaborative canvas after the starter template import unit.
 
 ## Completed
 
@@ -55,8 +55,42 @@ Update this file whenever the current phase, active feature, or implementation s
 - Share management is now implemented through `app/api/projects/[projectId]/collaborators`, covering collaborator listing, owner-only invite, and owner-only removal.
 - Collaborator API responses now enrich stored emails with Clerk display names and avatar images when available, while falling back to email-only entries when a Clerk user is not found.
 - The workspace `Share` button now opens a dedicated dialog where owners can invite, remove, and copy the project link with temporary `Copied!` feedback, while collaborators see a read-only collaborator list.
+- The share dialog access list now includes the project owner with Clerk-enriched identity details and a visible owner role badge, while keeping removal actions limited to invited collaborators.
 - Clerk auth page form appearance is now shared through `lib/clerk.ts`, so sign-in and sign-up stay visually aligned without duplicated inline config.
-- Verification completed for this unit with both `npx tsc --noEmit` and `npm run build`.
+- `liveblocks.config.ts` now defines the shared presence contract for cursor state and AI thinking state, plus typed Liveblocks user metadata for display name, avatar, and cursor color.
+- `lib/liveblocks.ts` now provides a cached `@liveblocks/node` client with lazy `LIVEBLOCKS_SECRET_KEY` validation and deterministic user-to-cursor-color mapping.
+- `app/api/liveblocks-auth` now authenticates Clerk users, verifies project membership, syncs Liveblocks room membership from project access data, and returns ID-token auth responses with user metadata.
+- Project collaborator helpers now expose Clerk user ID resolution for project members so Liveblocks room permissions can stay aligned with owner/collaborator access.
+- The editor canvas now includes a floating bottom shape panel with draggable entries for rectangle, diamond, circle, pill, cylinder, and hexagon.
+- Shape drag payloads now include the supported shape name plus sensible default width and height data, and the canvas drop flow creates synced custom canvas nodes at the dropped React Flow position.
+- A basic custom `canvasNode` renderer now displays newly dropped nodes as bordered rectangles with centered labels so shape-created nodes are immediately visible on the collaborative canvas.
+- The custom `canvasNode` renderer now draws all six supported shape variants, using CSS for rectangle, pill, and circle plus scalable SVG rendering for diamond, hexagon, and cylinder.
+- Shape dragging now shows a cursor-following ghost preview that matches the dragged shape and default drop size, then clears cleanly on drop or cancel.
+- The project workspace canvas now renders as a full-bleed editor surface with no rounded outer frame, while the AI panel floats as a right-side overlay instead of reserving canvas width.
+- Verification completed for the shape-panel unit with both `npx tsc --noEmit` and `npm run build`.
+- Selected canvas nodes now show subtle built-in resize handles, with per-shape minimum sizes enforced through the existing Liveblocks-backed node change flow.
+- Canvas nodes now support centered inline label editing on double-click, including placeholder rendering for empty labels, a textarea overlay while editing, live collaborative label updates as users type, `Escape`/blur exit, and drag/pan suppression during text entry.
+- Node-editing verification completed with `npx tsc --noEmit`; `npm run build` was started but did not finish producing output in the sandbox during this session.
+- The node-editing follow-up now keeps textarea focus stable while typing by preventing custom node remounts on each label update, exits editing on `Enter`, and restores side-only resizing by limiting label hit areas so the React Flow resizer lines stay reachable.
+- Selected canvas nodes now show a floating color toolbar with the predefined palette, and swatch selection updates each node's collaborative color theme immediately through the existing Liveblocks node state flow.
+- Node-colors toolbar verification completed with `npx tsc --noEmit` in the workspace and `npm run build` in a temporary repo copy after bypassing an orphaned local `.next` build lock.
+- Canvas nodes now expose four subtle edge handles with unique side IDs, allowing loose-mode connections from any side to any other side while keeping the node renderer otherwise unchanged.
+- New canvas connections now default to the custom `canvasEdge` type with arrowheads, rounded light strokes, and a widened interaction hit area without increasing visible edge thickness.
+- Custom canvas edges now support hover/selection emphasis, right-angle smooth-step routing, inline pill labels, and double-click label editing positioned through `EdgeLabelRenderer` with `getSmoothStepPath` midpoint coordinates.
+- Edge label changes now flow through the existing collaborative Liveblocks edge state using replace updates, and edge-behaviour type validation passed with `npx tsc --noEmit`.
+- A floating bottom-left canvas control bar now provides zoom out, fit view, zoom in, undo, and redo actions, with undo/redo disabled states driven by Liveblocks history availability.
+- Canvas zoom controls now call the active React Flow instance with short animated transitions, and the minimap has been removed from the workspace.
+- Keyboard shortcut handling now lives in `hooks/use-keyboard-shortcuts`, covering `+`, `=`, `-`, `Cmd/Ctrl + Z`, `Cmd/Ctrl + Shift + Z`, and `Cmd/Ctrl + Y` while skipping editable inputs, textareas, and contenteditable fields.
+- Canvas ergonomics verification completed with `npx tsc --noEmit` and `npm run build`.
+- Starter template data now lives in `components/editor/starter-templates.ts`, using shared canvas node and edge types plus the existing node color palette.
+- The workspace now includes a starter templates modal with scrollable template cards, lightweight diagram previews, and per-template import actions.
+- The editor navbar now exposes a `Templates` entry point for project workspaces.
+- Starter template imports now replace the current collaborative canvas by removing existing nodes and edges, adding the selected template graph through the existing Liveblocks React Flow state, and fitting the view afterward.
+- Starter template verification completed with `npx tsc --noEmit` locally and `npm run build` in a temporary repo copy after bypassing an existing root `.next` build lock.
+- Project creation now persists the validated client-provided project ID again, restoring the project ID to Liveblocks room ID invariant for newly created workspaces and returning a `409` conflict if that generated ID is already taken.
+- `app/api/liveblocks-auth` now syncs rooms with a single `upsertRoom` call and logs underlying Liveblocks initialization failures on the server instead of hiding every auth-path exception behind an uninspectable generic error.
+- The collaborators invite route now reuses the same response payload shape for both `GET` and `POST`, preserving the share dialog client contract while keeping `POST` at `201 Created`.
+- Canvas node labels now support keyboard activation for inline editing, so pressing `Enter` or `Space` on the label button mirrors the existing double-click edit behavior.
 
 ## In Progress
 
@@ -64,7 +98,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Start the real project canvas implementation inside `/editor/[projectId]`, then replace the AI placeholder sidebar with actual generation flows.
+- Resume the AI generation controls unit on top of the collaborative canvas after starter template import is complete.
 
 ## Open Questions
 
@@ -77,6 +111,7 @@ Update this file whenever the current phase, active feature, or implementation s
 ## Session Notes
 
 - The landing page now acts as an editor workspace shell preview with a floating overlay sidebar.
+- The canvas ergonomics unit was tracked ahead of implementation and is now complete, covering the zoom/history control bar, shortcut hook extraction, and minimap removal.
 - Production build verification required network access because the existing root layout fetches Geist fonts with `next/font/google`.
 - Authentication is enforced via `proxy.ts`, matching the Next.js 16 proxy file convention rather than deprecated `middleware.ts`.
 - Auth verification completed with a successful `npm run build` after allowing network access for the existing Google font fetch.
@@ -94,3 +129,18 @@ Update this file whenever the current phase, active feature, or implementation s
 - The duplicated Clerk auth form `appearance` config was consolidated into a shared export and will be covered by follow-up type-check validation for this small refactor.
 - Prisma client initialization is now lazy, so build-time or import-only evaluation no longer throws before a real database call requests the client.
 - Clerk public route matching now includes `/`, preventing proxy auth protection from intercepting the home route before its redirect logic runs.
+- Liveblocks room auth now uses the project ID as the room ID and updates room `usersAccesses` from the current project membership set before issuing an ID token.
+- Production build verification still requires network access because the existing root layout fetches Geist fonts through `next/font/google`.
+- The base-canvas unit expects the client provider to authenticate by room ID, so `/api/liveblocks-auth` should accept the provider-posted room payload while preserving the project ID to room ID invariant.
+- The shape-panel unit is now implemented and verified; `npm run build` passed after allowing the existing Next.js font fetch used by the shared Geist setup.
+- The workspace shell now treats the canvas as the base layer for project routes, so both side panels can hover above it without shrinking the collaborative surface.
+- The node-shape unit is now implemented with reusable shape rendering and drag ghost behavior; `npx tsc --noEmit` passes locally, while `npm run build` still depends on allowing the existing `next/font/google` Geist fetch outside the sandbox.
+- The node-editing unit is now implemented with selected-only resizing and inline collaborative label editing; `npx tsc --noEmit` passes locally, while the sandboxed `npm run build` run did not complete with additional output during verification.
+- The node-editing follow-up fix is verified with `npx tsc --noEmit`; it keeps collaborative live label updates but stabilizes the node renderer identity so inline editing no longer drops focus on every keystroke.
+- The node-colors toolbar unit is now implemented and verified; the workspace build lock was avoided by verifying `npm run build` from a temporary `/tmp/ghost-ai-verify` copy while keeping the same source changes.
+- The edge-behaviour unit is implemented and type-checked locally; the remaining production build verification is currently blocked only by the existing `next/font/google` Geist and Geist Mono fetch during `npm run build`.
+- The canvas ergonomics unit is now implemented and verified; `npx tsc --noEmit` passed locally, and `npm run build` passed after allowing network access for the existing `next/font/google` Geist and Geist Mono fetch.
+- The starter template unit is now implemented and verified; production build verification was completed from a temporary `/tmp` repo copy because another `next build` process in the root workspace held the existing `.next` lock.
+- The Liveblocks new-project auth regression is fixed by persisting the requested project ID during project creation and using `upsertRoom` for room initialization, which keeps fresh project workspaces aligned with the room IDs the client expects.
+- The collaborators route now builds a shared response body for `GET` and `POST`, fixing the share dialog invite flow without changing the client contract.
+- The canvas node label button now enters edit mode from keyboard activation as well as double-click, preserving button semantics while improving accessibility.

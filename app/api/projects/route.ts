@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import {
   DEFAULT_PROJECT_NAME,
+  jsonError,
   parseProjectBody,
   requireAuthenticatedUser,
 } from "@/lib/project-api"
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
 
   const project = await prisma.project.create({
     data: {
+      ...(bodyResult.id ? { id: bodyResult.id } : {}),
       ownerId: authResult.userId,
       name: bodyResult.name,
     },
@@ -77,7 +79,21 @@ export async function POST(request: Request) {
       updatedAt: true,
       ownerId: true,
     },
+  }).catch((error: { code?: string }) => {
+    if (bodyResult.id && error.code === "P2002") {
+      return null
+    }
+
+    throw error
   })
+
+  if (!project) {
+    return jsonError(
+      409,
+      "PROJECT_ID_TAKEN",
+      "A project with this ID already exists. Try creating the project again."
+    )
+  }
 
   return Response.json({ project }, { status: 201 })
 }

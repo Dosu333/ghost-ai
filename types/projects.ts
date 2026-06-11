@@ -9,3 +9,7 @@ export interface ProjectCollaborator {
   displayName: string | null
   email: string
 }
+
+export interface ProjectAccessMember extends ProjectCollaborator {
+  role: "owner" | "collaborator"
+}
