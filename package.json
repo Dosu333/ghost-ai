@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "trigger:dev": "trigger dev",
+    "trigger:deploy": "trigger deploy",
+    "trigger:login": "trigger login"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -20,6 +23,7 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^6.19.3",
     "@prisma/extension-accelerate": "^3.0.1",
+    "@trigger.dev/sdk": "^4.4.6",
     "@vercel/blob": "^2.4.0",
     "@xyflow/react": "^12.11.0",
     "class-variance-authority": "^0.7.1",
@@ -36,6 +40,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@trigger.dev/build": "^4.4.6",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
@@ -44,6 +49,7 @@
     "eslint-config-next": "16.2.7",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
+    "trigger.dev": "^4.4.6",
     "tsx": "^4.22.4",
     "typescript": "^5"
   }

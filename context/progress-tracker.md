@@ -113,6 +113,10 @@ Update this file whenever the current phase, active feature, or implementation s
 - Canvas persistence now uses private-access Blob reads and writes, matching the configured private store and fixing autosave `500` failures caused by public-access Blob operations.
 - Autosave change detection now compares normalized persisted canvas snapshots instead of raw React Flow state, preventing click-only selection changes from triggering saves.
 - Canvas deletion shortcuts now explicitly support both `Backspace` and `Delete`, matching expected editor behavior for selected nodes and edges.
+- Trigger.dev is now installed in the app with pinned `@trigger.dev/sdk`, `@trigger.dev/build`, and `trigger.dev` CLI packages plus project scripts for login, local task dev, and deploy.
+- Root Trigger.dev configuration now lives in `trigger.config.ts`, scanning the `trigger/` directory and including the Prisma legacy build extension through the existing `prisma.config.ts`.
+- Trigger task scaffolding now exists for architecture generation and spec generation, with placeholder background-task bodies ready for the later AI workflow unit.
+- Authenticated project-scoped Trigger.dev enqueue routes now exist at `app/api/projects/[projectId]/generate-architecture` and `app/api/projects/[projectId]/generate-spec`, enforcing project access before starting background runs.
 
 ## In Progress
 
@@ -175,3 +179,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - The presence follow-up is now implemented and verified; unnamed collaborators fall back to email in Liveblocks user info, and drag interactions now keep collaborator cursors moving with node and selection drags.
 - The cursor coordinate follow-up is now implemented and verified; cursor presence uses shared flow coordinates and renders accurately even when collaborators have different zoom levels or viewport positions.
 - The AI sidebar shell unit is implemented as a dedicated client component while keeping the parent-controlled open/close behavior, floating placement, and right-side slide transition intact.
+- The Trigger.dev foundation unit is now implemented and type-checked with `npx tsc --noEmit`; `npx trigger --version` reports `4.4.6`.
+- Root `npm run build` verification could not complete in this session because another Next.js build process or stale build lock was already present in the active workspace, and the temporary `/tmp` verification fallback hit a Turbopack symlink restriction on `node_modules`.
