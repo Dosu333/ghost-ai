@@ -7,14 +7,19 @@ import {
   RoomProvider,
   useErrorListener,
 } from "@liveblocks/react/suspense"
+import type { ReactNode } from "react"
 import { useState } from "react"
 
 import { CanvasErrorBoundary } from "@/components/editor/canvas-error-boundary"
 import { EditorCanvas } from "@/components/editor/editor-canvas"
 import type { CanvasTemplate } from "@/components/editor/starter-templates"
+import type { CanvasSaveStatus } from "@/types/canvas-persistence"
 
 interface EditorRoomCanvasProps {
+  initialCanvasJsonPath?: string | null
+  onSaveStatusChange?: (status: CanvasSaveStatus) => void
   roomId: string
+  saveRequestId?: number
   templateImportRequest?: {
     requestId: number
     template: CanvasTemplate
@@ -58,9 +63,9 @@ function CanvasLoadingState() {
 }
 
 function CanvasConnectionGuard({
-  templateImportRequest,
+  children,
 }: {
-  templateImportRequest: EditorRoomCanvasProps["templateImportRequest"]
+  children: ReactNode
 }) {
   const [connectionError, setConnectionError] =
     useState<CanvasConnectionError | null>(null)
@@ -104,14 +109,17 @@ function CanvasConnectionGuard({
       }
     >
       <ClientSideSuspense fallback={<CanvasLoadingState />}>
-        {() => <EditorCanvas templateImportRequest={templateImportRequest} />}
+        {() => children}
       </ClientSideSuspense>
     </CanvasErrorBoundary>
   )
 }
 
 export function EditorRoomCanvas({
+  initialCanvasJsonPath = null,
+  onSaveStatusChange,
   roomId,
+  saveRequestId = 0,
   templateImportRequest = null,
 }: EditorRoomCanvasProps) {
   return (
@@ -123,7 +131,15 @@ export function EditorRoomCanvas({
           thinking: false,
         }}
       >
-        <CanvasConnectionGuard templateImportRequest={templateImportRequest} />
+        <CanvasConnectionGuard>
+          <EditorCanvas
+            initialCanvasJsonPath={initialCanvasJsonPath}
+            onSaveStatusChange={onSaveStatusChange}
+            projectId={roomId}
+            saveRequestId={saveRequestId}
+            templateImportRequest={templateImportRequest}
+          />
+        </CanvasConnectionGuard>
       </RoomProvider>
     </LiveblocksProvider>
   )

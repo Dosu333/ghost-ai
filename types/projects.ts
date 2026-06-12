@@ -1,4 +1,5 @@
 export interface EditorProject {
+  canvasJsonPath?: string | null
   id: string
   name: string
   role: "owner" | "collaborator"

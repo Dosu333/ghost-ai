@@ -39,6 +39,7 @@ import { CanvasPresenceOverlay } from "@/components/editor/canvas-presence-overl
 import { CanvasShape } from "@/components/editor/canvas-shape"
 import { ShapePanel } from "@/components/editor/shape-panel"
 import type { CanvasTemplate } from "@/components/editor/starter-templates"
+import { useCanvasAutosave } from "@/hooks/use-canvas-autosave"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import type { CanvasEdge, CanvasNode } from "@/types/canvas"
 import {
@@ -50,6 +51,11 @@ import {
   type CanvasNodeColor,
   type CanvasShapeDragPayload,
 } from "@/types/canvas"
+import type {
+  CanvasLoadResponse,
+  CanvasSaveStatus,
+  CanvasSnapshot,
+} from "@/types/canvas-persistence"
 
 import "@xyflow/react/dist/style.css"
 import "@liveblocks/react-flow/styles.css"
@@ -114,6 +120,10 @@ interface DragPreviewState {
 const VIEWPORT_ANIMATION_DURATION_MS = 180
 
 interface EditorCanvasProps {
+  initialCanvasJsonPath?: string | null
+  onSaveStatusChange?: (status: CanvasSaveStatus) => void
+  projectId: string
+  saveRequestId?: number
   templateImportRequest?: {
     requestId: number
     template: CanvasTemplate
@@ -121,6 +131,10 @@ interface EditorCanvasProps {
 }
 
 export function EditorCanvas({
+  initialCanvasJsonPath = null,
+  onSaveStatusChange,
+  projectId,
+  saveRequestId = 0,
   templateImportRequest = null,
 }: EditorCanvasProps) {
   const canvasWrapperRef = useRef<HTMLDivElement | null>(null)
@@ -129,8 +143,10 @@ export function EditorCanvas({
   const edgesRef = useRef<CanvasEdge[]>([])
   const reactFlowInstanceRef =
     useRef<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null)
+  const hasAttemptedSavedCanvasLoadRef = useRef(false)
   const lastImportedTemplateRequestIdRef = useRef<number | null>(null)
   const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null)
+  const [isAutosaveEnabled, setIsAutosaveEnabled] = useState(false)
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance<CanvasNode, CanvasEdge> | null>(null)
   const [viewportVersion, setViewportVersion] = useState(0)
@@ -150,6 +166,11 @@ export function EditorCanvas({
         initial: [],
       },
     })
+  const { saveNow, syncBaseline } = useCanvasAutosave(nodes, edges, {
+    enabled: isAutosaveEnabled,
+    onStatusChange: onSaveStatusChange,
+    projectId,
+  })
 
   useEffect(() => {
     nodesRef.current = nodes
@@ -158,6 +179,139 @@ export function EditorCanvas({
   useEffect(() => {
     edgesRef.current = edges
   }, [edges])
+
+  const replaceCanvasSnapshot = useCallback(
+    (snapshot: CanvasSnapshot) => {
+      const currentEdges = edgesRef.current
+      const currentNodes = nodesRef.current
+
+      if (currentEdges.length > 0) {
+        onEdgesChange(
+          currentEdges.map((edge) => ({
+            id: edge.id,
+            type: "remove" as const,
+          }))
+        )
+      }
+
+      if (currentNodes.length > 0) {
+        onNodesChange(
+          currentNodes.map((node) => ({
+            id: node.id,
+            type: "remove" as const,
+          }))
+        )
+      }
+
+      if (snapshot.nodes.length > 0) {
+        onNodesChange(
+          snapshot.nodes.map((node, index) => ({
+            type: "add" as const,
+            item: node,
+            index,
+          }))
+        )
+      }
+
+      if (snapshot.edges.length > 0) {
+        onEdgesChange(
+          snapshot.edges.map((edge, index) => ({
+            type: "add" as const,
+            item: edge,
+            index,
+          }))
+        )
+      }
+    },
+    [onEdgesChange, onNodesChange]
+  )
+
+  useEffect(() => {
+    if (saveRequestId === 0) {
+      return
+    }
+
+    saveNow()
+  }, [saveNow, saveRequestId])
+
+  useEffect(() => {
+    if (hasAttemptedSavedCanvasLoadRef.current) {
+      return
+    }
+
+    if (!reactFlowInstance) {
+      return
+    }
+
+    if (nodes.length > 0 || edges.length > 0) {
+      hasAttemptedSavedCanvasLoadRef.current = true
+      setIsAutosaveEnabled(true)
+      return
+    }
+
+    if (!initialCanvasJsonPath) {
+      hasAttemptedSavedCanvasLoadRef.current = true
+      setIsAutosaveEnabled(true)
+      return
+    }
+
+    hasAttemptedSavedCanvasLoadRef.current = true
+
+    let isCancelled = false
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/canvas`, {
+          cache: "no-store",
+        })
+
+        if (!response.ok) {
+          throw new Error("Canvas load failed.")
+        }
+
+        const body = (await response.json()) as CanvasLoadResponse
+        const canvas = body.canvas
+
+        if (isCancelled || !canvas) {
+          return
+        }
+
+        if (nodesRef.current.length > 0 || edgesRef.current.length > 0) {
+          return
+        }
+
+        syncBaseline(canvas)
+        replaceCanvasSnapshot(canvas)
+
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            void reactFlowInstanceRef.current?.fitView({
+              duration: VIEWPORT_ANIMATION_DURATION_MS,
+              padding: 0.18,
+            })
+          })
+        })
+      } catch {
+        // Keep the room usable even if the saved snapshot can't be restored.
+      } finally {
+        if (!isCancelled) {
+          setIsAutosaveEnabled(true)
+        }
+      }
+    })()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [
+    edges.length,
+    initialCanvasJsonPath,
+    nodes.length,
+    projectId,
+    reactFlowInstance,
+    replaceCanvasSnapshot,
+    syncBaseline,
+  ])
 
   useEffect(() => {
     if (!templateImportRequest) {
@@ -170,42 +324,10 @@ export function EditorCanvas({
 
     lastImportedTemplateRequestIdRef.current = templateImportRequest.requestId
 
-    const currentEdges = edgesRef.current
-    const currentNodes = nodesRef.current
-
-    if (currentEdges.length > 0) {
-      onEdgesChange(
-        currentEdges.map((edge) => ({
-          id: edge.id,
-          type: "remove" as const,
-        })),
-      )
-    }
-
-    if (currentNodes.length > 0) {
-      onNodesChange(
-        currentNodes.map((node) => ({
-          id: node.id,
-          type: "remove" as const,
-        })),
-      )
-    }
-
-    onNodesChange(
-      templateImportRequest.template.nodes.map((node, index) => ({
-        type: "add" as const,
-        item: node,
-        index,
-      })),
-    )
-
-    onEdgesChange(
-      templateImportRequest.template.edges.map((edge, index) => ({
-        type: "add" as const,
-        item: edge,
-        index,
-      })),
-    )
+    replaceCanvasSnapshot({
+      edges: templateImportRequest.template.edges,
+      nodes: templateImportRequest.template.nodes,
+    })
 
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -215,7 +337,7 @@ export function EditorCanvas({
         })
       })
     })
-  }, [onEdgesChange, onNodesChange, templateImportRequest])
+  }, [replaceCanvasSnapshot, templateImportRequest])
 
   const handleZoomIn = useCallback(() => {
     void reactFlowInstance?.zoomIn({
@@ -588,6 +710,7 @@ export function EditorCanvas({
         onSelectionDrag={handleSelectionDrag}
         onMove={handleViewportMove}
         connectionMode={ConnectionMode.Loose}
+        deleteKeyCode={["Backspace", "Delete"]}
         fitView
         className="bg-base"
         defaultEdgeOptions={defaultEdgeOptions}

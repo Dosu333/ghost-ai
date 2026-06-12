@@ -1,8 +1,16 @@
 "use client"
 
 import { UserButton } from "@clerk/nextjs"
-import { LayoutTemplate, Plus, Share2, Sparkles } from "lucide-react"
-import { useState } from "react"
+import {
+  AlertCircle,
+  CheckCircle2,
+  LayoutTemplate,
+  LoaderCircle,
+  Plus,
+  Share2,
+  Sparkles,
+} from "lucide-react"
+import { useCallback, useState } from "react"
 
 import { AiSidebar } from "@/components/editor/ai-sidebar"
 import { EditorRoomCanvas } from "@/components/editor/editor-room-canvas"
@@ -17,6 +25,7 @@ import {
 import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal"
 import { Button } from "@/components/ui/button"
 import { useProjectActions } from "@/hooks/use-project-actions"
+import type { CanvasSaveStatus } from "@/types/canvas-persistence"
 import type { EditorProject } from "@/types/projects"
 
 interface EditorWorkspaceShellProps {
@@ -34,6 +43,8 @@ export function EditorWorkspaceShell({
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(true)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [isStarterTemplatesOpen, setIsStarterTemplatesOpen] = useState(false)
+  const [canvasSaveStatus, setCanvasSaveStatus] =
+    useState<CanvasSaveStatus>("saved")
   const [templateImportRequest, setTemplateImportRequest] = useState<{
     requestId: number
     template: CanvasTemplate
@@ -58,6 +69,18 @@ export function EditorWorkspaceShell({
 
   const workspaceProject = activeProject ?? null
   const isProjectWorkspace = workspaceProject !== null
+  const [saveRequestId, setSaveRequestId] = useState(0)
+
+  const handleSaveNow = useCallback(() => {
+    setSaveRequestId((requestId) => requestId + 1)
+  }, [])
+
+  const saveButtonLabel =
+    canvasSaveStatus === "saving"
+      ? "Saving..."
+      : canvasSaveStatus === "error"
+        ? "Save error"
+        : "Saved"
 
   return (
     <main className="min-h-screen bg-base text-copy-primary">
@@ -69,6 +92,22 @@ export function EditorWorkspaceShell({
           <>
             {isProjectWorkspace ? (
               <>
+                <Button
+                  variant="outline"
+                  className="rounded-xl border-surface-border bg-elevated/80 text-copy-secondary hover:bg-subtle hover:text-copy-primary"
+                  type="button"
+                  onClick={handleSaveNow}
+                  disabled={canvasSaveStatus === "saving"}
+                >
+                  {canvasSaveStatus === "saving" ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : canvasSaveStatus === "error" ? (
+                    <AlertCircle className="h-4 w-4 text-[var(--state-error)]" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-[var(--state-success)]" />
+                  )}
+                  {saveButtonLabel}
+                </Button>
                 <Button
                   variant="outline"
                   className="rounded-xl border-surface-border bg-elevated/80 text-copy-secondary hover:bg-subtle hover:text-copy-primary"
@@ -158,7 +197,10 @@ export function EditorWorkspaceShell({
             <div className="h-[calc(100vh-4rem)] w-full">
               <section className="h-full w-full overflow-hidden">
                 <EditorRoomCanvas
+                  initialCanvasJsonPath={workspaceProject.canvasJsonPath ?? null}
+                  onSaveStatusChange={setCanvasSaveStatus}
                   roomId={workspaceProject.id}
+                  saveRequestId={saveRequestId}
                   templateImportRequest={templateImportRequest}
                 />
               </section>

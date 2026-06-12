@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Complete the AI sidebar shell UI on top of the collaborative canvas.
+- Connect the AI sidebar controls to real generation and spec workflows in a later unit.
 
 ## Completed
 
@@ -103,6 +103,16 @@ Update this file whenever the current phase, active feature, or implementation s
 - Cursor coordinate follow-up verification completed with `npx tsc --noEmit` and `npm run build`; build verification again required the existing `next/font/google` network allowance outside the sandbox.
 - The floating AI sidebar is now separated into its own component and includes tabbed `AI Architect` and `Specs` views with a scrollable chat area, starter prompt chips, auto-resizing prompt input, and a static demo spec card.
 - AI sidebar shell verification completed with `npx tsc --noEmit` in the workspace and `npm run build` in a temporary `/tmp/ghost-ai-verify` copy after bypassing an existing root `.next` build lock.
+- `@vercel/blob` is now installed for canvas snapshot persistence.
+- Project workspace canvas state now saves through `PUT /api/projects/[projectId]/canvas`, storing JSON in Vercel Blob and the returned blob URL on the Prisma project record.
+- Project workspaces can now restore saved canvas state through `GET /api/projects/[projectId]/canvas`, but only hydrate when the connected Liveblocks room is still empty.
+- A debounced `hooks/use-canvas-autosave.ts` hook now tracks collaborative node and edge changes, persists them through the canvas API, and exposes `saving`, `saved`, and `error` status for the editor UI.
+- The editor navbar now includes a Save status button with manual flush support and live autosave feedback for project workspaces.
+- Canvas autosave and loading verification completed with `npx tsc --noEmit` in the workspace and `npm run build` in a temporary `/tmp/ghost-ai-verify` copy after bypassing an existing root `.next` build lock.
+- Canvas persistence now normalizes real React Flow snapshots before save/load, preventing autosave `400 INVALID_CANVAS` failures from optional or transient node and edge fields in existing rooms.
+- Canvas persistence now uses private-access Blob reads and writes, matching the configured private store and fixing autosave `500` failures caused by public-access Blob operations.
+- Autosave change detection now compares normalized persisted canvas snapshots instead of raw React Flow state, preventing click-only selection changes from triggering saves.
+- Canvas deletion shortcuts now explicitly support both `Backspace` and `Delete`, matching expected editor behavior for selected nodes and edges.
 
 ## In Progress
 
@@ -122,6 +132,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- The canvas autosave and loading unit is now complete, covering Vercel Blob persistence, project metadata updates, debounced editor saves, and room-empty guarded restore behavior.
+- The canvas persistence validator now normalizes snapshots instead of rejecting older or partially populated React Flow fields, fixing the autosave `400` seen on existing project rooms.
+- Canvas snapshot storage now uses authenticated Blob SDK reads plus private Blob writes, keeping persistence compatible with the current private Blob store configuration.
+- The autosave hook now normalizes client snapshots before diffing or sending them, so selection and other transient UI state no longer count as persistent canvas edits.
+- React Flow now receives both supported delete key codes, so selected canvas elements can be removed with either `Backspace` or `Delete`.
 - The landing page now acts as an editor workspace shell preview with a floating overlay sidebar.
 - The canvas ergonomics unit was tracked ahead of implementation and is now complete, covering the zoom/history control bar, shortcut hook extraction, and minimap removal.
 - Production build verification required network access because the existing root layout fetches Geist fonts with `next/font/google`.

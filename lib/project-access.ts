@@ -9,6 +9,7 @@ export interface ProjectAccessIdentity {
 }
 
 export interface ProjectAccessResult {
+  canvasJsonPath: string | null
   id: string
   name: string
   role: "owner" | "collaborator"
@@ -56,6 +57,7 @@ export async function getProjectAccess(
       id: projectId,
     },
     select: {
+      canvasJsonPath: true,
       id: true,
       name: true,
       ownerId: true,
@@ -68,6 +70,7 @@ export async function getProjectAccess(
 
   if (project.ownerId === identity.userId) {
     return {
+      canvasJsonPath: project.canvasJsonPath,
       id: project.id,
       name: project.name,
       role: "owner",
@@ -93,6 +96,7 @@ export async function getProjectAccess(
   }
 
   return {
+    canvasJsonPath: project.canvasJsonPath,
     id: project.id,
     name: project.name,
     role: "collaborator",
