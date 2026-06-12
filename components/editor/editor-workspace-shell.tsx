@@ -4,6 +4,7 @@ import { UserButton } from "@clerk/nextjs"
 import { LayoutTemplate, Plus, Share2, Sparkles } from "lucide-react"
 import { useState } from "react"
 
+import { AiSidebar } from "@/components/editor/ai-sidebar"
 import { EditorRoomCanvas } from "@/components/editor/editor-room-canvas"
 import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { ProjectDialogs } from "@/components/editor/project-dialogs"
@@ -142,36 +143,10 @@ export function EditorWorkspaceShell({
             onClick={() => setIsAiSidebarOpen(false)}
           />
 
-          <aside
-            className={[
-              "pointer-events-none fixed top-20 right-4 bottom-4 z-30 w-[min(24rem,calc(100vw-2rem))] transition-all duration-300 ease-out",
-              isAiSidebarOpen
-                ? "translate-x-0 opacity-100"
-                : "translate-x-[calc(100%+1.5rem)] opacity-0",
-            ].join(" ")}
-            aria-hidden={!isAiSidebarOpen}
-          >
-            <div className="pointer-events-auto flex h-full flex-col rounded-3xl border border-surface-border bg-surface/88 p-5 shadow-2xl shadow-black/20 backdrop-blur-md">
-              <div className="flex items-center gap-3 border-b border-surface-border pb-4">
-                <div className="flex size-11 items-center justify-center rounded-2xl border border-surface-border bg-elevated text-ai">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-semibold text-copy-primary">
-                    AI Workspace
-                  </h2>
-                  <p className="text-sm text-copy-muted">
-                    Placeholder for future chat and generation controls.
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-1 items-center justify-center">
-                <p className="max-w-xs text-center text-sm leading-6 text-copy-secondary">
-                  AI actions will appear here once generation flows are added.
-                </p>
-              </div>
-            </div>
-          </aside>
+          <AiSidebar
+            isOpen={isAiSidebarOpen}
+            onClose={() => setIsAiSidebarOpen(false)}
+          />
         </>
       ) : null}
 

@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Add AI generation controls on top of the collaborative canvas after the presence unit.
+- Complete the AI sidebar shell UI on top of the collaborative canvas.
 
 ## Completed
 
@@ -101,6 +101,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Collaborative cursor presence now stores shared flow-space coordinates instead of local screen pixels, so collaborator cursors stay aligned across different zoom levels and pan offsets.
 - The cursor overlay now reprojects remote flow-space cursors through the local React Flow viewport on every viewport move, keeping cursor placement accurate while users pan or zoom independently.
 - Cursor coordinate follow-up verification completed with `npx tsc --noEmit` and `npm run build`; build verification again required the existing `next/font/google` network allowance outside the sandbox.
+- The floating AI sidebar is now separated into its own component and includes tabbed `AI Architect` and `Specs` views with a scrollable chat area, starter prompt chips, auto-resizing prompt input, and a static demo spec card.
+- AI sidebar shell verification completed with `npx tsc --noEmit` in the workspace and `npm run build` in a temporary `/tmp/ghost-ai-verify` copy after bypassing an existing root `.next` build lock.
 
 ## In Progress
 
@@ -108,7 +110,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Resume the AI generation controls unit on top of the collaborative canvas.
+- Connect the AI sidebar controls to real generation and spec workflows in a later unit.
 
 ## Open Questions
 
@@ -157,3 +159,4 @@ Update this file whenever the current phase, active feature, or implementation s
 - The presence avatars and cursors unit is now implemented and verified; the only escalation needed for final build validation was the existing `next/font/google` network fetch in the shared app shell.
 - The presence follow-up is now implemented and verified; unnamed collaborators fall back to email in Liveblocks user info, and drag interactions now keep collaborator cursors moving with node and selection drags.
 - The cursor coordinate follow-up is now implemented and verified; cursor presence uses shared flow coordinates and renders accurately even when collaborators have different zoom levels or viewport positions.
+- The AI sidebar shell unit is implemented as a dedicated client component while keeping the parent-controlled open/close behavior, floating placement, and right-side slide transition intact.
