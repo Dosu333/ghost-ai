@@ -8,10 +8,17 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Connect the AI sidebar controls to real generation and spec workflows in a later unit.
+- Implement the design-agent frontend wiring in the AI sidebar: prompt submission, realtime Trigger.dev run tracking, and active-run status display.
 
 ## Completed
 
+- `POST /api/ai/design` now returns both `runId` and a Trigger.dev `publicToken`, so the AI sidebar can subscribe to realtime run updates immediately without depending on a second token request.
+- Design-agent enqueueing now treats Trigger.dev task startup, realtime token creation, and `TaskRun` persistence as separate steps; a missing `TaskRun` table no longer causes successful runs to be reported back to the client as failed triggers.
+- The AI sidebar no longer eagerly recreates `ai-status-feed` and `ai-chat` on mount; feed creation now stays lazy/write-scoped, fixing the browser-side unhandled `LiveblocksError: Feed ... already exists` promise rejections.
+- The AI sidebar now uses a dedicated room-scoped Liveblocks `ai-chat` feed for collaborative chat messages, kept separate from the existing `ai-status-feed`.
+- Sidebar chat messages now validate through a shared Zod-backed schema in `types/tasks.ts`, covering `sender`, `role`, `content`, and `timestamp` before rendering.
+- The sidebar chat area now renders validated room messages in chronological order with sender names, timestamps, current-user alignment, and inline send failure feedback.
+- The existing AI sidebar input and send button now publish user messages to `ai-chat`, clearing the draft only after a successful send.
 - Design system foundation implemented.
 - shadcn/ui configured for this Next.js 16 app.
 - Required primitives added: Button, Card, Dialog, Input, Tabs, Textarea, ScrollArea.
@@ -117,14 +124,34 @@ Update this file whenever the current phase, active feature, or implementation s
 - Root Trigger.dev configuration now lives in `trigger.config.ts`, scanning the `trigger/` directory and including the Prisma legacy build extension through the existing `prisma.config.ts`.
 - Trigger task scaffolding now exists for architecture generation and spec generation, with placeholder background-task bodies ready for the later AI workflow unit.
 - Authenticated project-scoped Trigger.dev enqueue routes now exist at `app/api/projects/[projectId]/generate-architecture` and `app/api/projects/[projectId]/generate-spec`, enforcing project access before starting background runs.
+- The design-agent backend API is now implemented with `POST /api/ai/design` for authenticated task enqueueing, project access checks, and persisted Trigger.dev run tracking.
+- `POST /api/ai/design/token` now verifies run ownership through Prisma `TaskRun` records and returns a Trigger.dev public token scoped to the requested run.
+- A new Prisma `TaskRun` model now tracks `runId`, `projectId`, `userId`, and `createdAt`, with the required unique/indexed run lookup and user-project lookup paths.
+- The pending `TaskRun` Prisma migration has now been applied to the configured PostgreSQL database, so design-agent run tracking writes succeed against the live schema.
+- `trigger/design-agent.ts` now runs the full AI design workflow, using Gemini to generate constrained canvas mutations and applying them through the shared Liveblocks room storage used by the collaborative editor.
+- Design-agent API and logic verification completed with `npx prisma generate`, `npx prisma validate`, and `npx tsc --noEmit`; production `npm run build` remains blocked in the sandbox only by the existing `next/font/google` network fetch for Geist and Geist Mono.
+- The AI sidebar is now wired to `POST /api/ai/design`, submitting real design prompts from project workspaces instead of the earlier static placeholder response.
+- Liveblocks room context now wraps both the canvas and AI sidebar within project workspaces, allowing shared AI status events and AI presence to reach every connected participant in the same room.
+- Liveblocks room events now include a typed `ai-status` payload used as the shared AI status feed for start, processing, completion, and failure updates.
+- The design agent task now uses Gemini through `@ai-sdk/google` to generate constrained canvas operations from user prompts, validates those operations against the existing canvas schema, and applies them to the Liveblocks-backed React Flow storage.
+- Supported AI canvas mutations now cover add node, move node, resize node, update node data, delete node, add edge, and delete edge while preserving the existing node shapes, color palette, and flow storage model.
+- The design agent now publishes shared status messages and AI presence updates throughout a run, including collaborative Ghost AI cursor placement, visible thinking state, completion summaries, and graceful failure messages.
+- Presence avatars and remote cursors now surface AI thinking state with a visible Ghost AI indicator so collaborators can see when the background agent is actively working in the room.
+- Design-agent logic verification completed with `npx tsc --noEmit`; `npm run build` now fails in the sandbox only because the existing `next/font/google` Geist and Geist Mono fetches cannot reach Google Fonts without network access.
+- The design agent now resolves its Gemini API key explicitly from `GOOGLE_GENERATIVE_AI_API_KEY` with `GEMINI_API_KEY` as a compatibility fallback, and throws a task-specific configuration error when neither is available in the Trigger worker environment.
+- Shared AI status messages now use a validated `ai-status-feed` contract in `types/tasks.ts`, with latest-message rendering in the AI sidebar and a fallback room event bridge for immediate realtime updates.
+- The AI sidebar now shows only the most recent validated shared status, disables prompt submission while shared generation is active, and keeps the rest of the panel usable.
+- Remote cursor name badges now show a small spinner whenever that participant's Liveblocks presence has `thinking: true`.
+- Liveblocks status publishing now writes to the shared `ai-status-feed` and broadcasts matching realtime events so feed-backed UI and room presence stay aligned.
+- The legacy project Trigger route imports now no longer reference deleted task modules, restoring successful repo-wide type-check and build verification.
 
 ## In Progress
 
-- None currently.
+- `26-design-agent-frontend.md` is now the active unit, focused on connecting the existing Liveblocks `ai-chat` feed to the design-agent enqueue flow and Trigger.dev realtime run updates without changing backend task logic.
 
 ## Next Up
 
-- Connect the AI sidebar controls to real generation and spec workflows in a later unit.
+- Connect the Specs sidebar controls to the backend spec-generation workflow in a later unit after the design-agent frontend wiring is complete.
 
 ## Open Questions
 
@@ -136,6 +163,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- The design-agent API follow-up now degrades safely when `TaskRun` persistence is unavailable: the route still returns `202` plus a realtime token after a successful Trigger enqueue, and logs task-run persistence failures separately until the pending Prisma migration is applied.
+- The `20260612103000_add_task_run` migration has now been deployed successfully, bringing the live database schema in sync with the `TaskRun` model used by the design-agent API and token lookup flow.
+- The design-agent frontend follow-up removed mount-time Liveblocks feed creation from the AI sidebar after confirming `useCreateFeed()` rejects asynchronously; this fixes the repeated browser `unhandledRejection` noise for already-existing feeds while preserving lazy `ai-chat` creation before sends.
+- The AI presence/status unit from `24-ai-presence-state.md` is now complete and verified with `npx tsc --noEmit` plus `npm run build`.
+- Build verification required allowing network access for the existing `next/font/google` Geist and Geist Mono fetches in the shared app shell.
 - The canvas autosave and loading unit is now complete, covering Vercel Blob persistence, project metadata updates, debounced editor saves, and room-empty guarded restore behavior.
 - The canvas persistence validator now normalizes snapshots instead of rejecting older or partially populated React Flow fields, fixing the autosave `400` seen on existing project rooms.
 - Canvas snapshot storage now uses authenticated Blob SDK reads plus private Blob writes, keeping persistence compatible with the current private Blob store configuration.
@@ -181,3 +213,9 @@ Update this file whenever the current phase, active feature, or implementation s
 - The AI sidebar shell unit is implemented as a dedicated client component while keeping the parent-controlled open/close behavior, floating placement, and right-side slide transition intact.
 - The Trigger.dev foundation unit is now implemented and type-checked with `npx tsc --noEmit`; `npx trigger --version` reports `4.4.6`.
 - Root `npm run build` verification could not complete in this session because another Next.js build process or stale build lock was already present in the active workspace, and the temporary `/tmp` verification fallback hit a Turbopack symlink restriction on `node_modules`.
+- The design-agent API unit is now implemented and verified; the repo includes a new `TaskRun` migration SQL file, but applying that migration to the configured remote PostgreSQL database still needs an explicit follow-up deploy or `prisma migrate deploy` run outside this session.
+- The design-agent logic unit is now implemented end to end for project workspaces, including Gemini-backed canvas mutations, shared AI room events, AI presence updates, and AI sidebar prompt submission.
+- The Gemini provider setup now matches the Trigger worker runtime more closely by avoiding implicit AI SDK env lookup and supporting both documented API key env names directly in code.
+- Production build verification is still blocked in the sandbox by the existing `next/font/google` Geist and Geist Mono fetch requirement; `npx tsc --noEmit` passes locally for the full design-agent logic change set.
+- The active unit is `25-sidebar-chat-feed.md`, which intentionally scopes the AI sidebar input to collaborative room chat only and keeps it separate from backend AI task triggering.
+- The sidebar chat feed unit is now complete: `npx tsc --noEmit` passes, and `npm run build` is blocked only by the existing `next/font/google` Geist and Geist Mono fetch failure in the sandbox.

@@ -2,6 +2,10 @@
 
 import { UserButton } from "@clerk/nextjs"
 import {
+  LiveblocksProvider,
+  RoomProvider,
+} from "@liveblocks/react/suspense"
+import {
   AlertCircle,
   CheckCircle2,
   LayoutTemplate,
@@ -167,45 +171,59 @@ export function EditorWorkspaceShell({
       />
 
       {isProjectWorkspace ? (
-        <>
-          <button
-            type="button"
-            aria-label="Close AI panel"
-            aria-hidden={!isAiSidebarOpen}
-            tabIndex={isAiSidebarOpen ? 0 : -1}
-            className={[
-              "fixed inset-0 top-16 z-20 bg-black/45 transition-opacity duration-300 xl:hidden",
-              isAiSidebarOpen
-                ? "pointer-events-auto opacity-100"
-                : "pointer-events-none opacity-0",
-            ].join(" ")}
-            onClick={() => setIsAiSidebarOpen(false)}
-          />
+        <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+          <RoomProvider
+            id={workspaceProject.id}
+            initialPresence={{
+              cursor: null,
+              thinking: false,
+            }}
+          >
+            <button
+              type="button"
+              aria-label="Close AI panel"
+              aria-hidden={!isAiSidebarOpen}
+              tabIndex={isAiSidebarOpen ? 0 : -1}
+              className={[
+                "fixed inset-0 top-16 z-20 bg-black/45 transition-opacity duration-300 xl:hidden",
+                isAiSidebarOpen
+                  ? "pointer-events-auto opacity-100"
+                  : "pointer-events-none opacity-0",
+              ].join(" ")}
+              onClick={() => setIsAiSidebarOpen(false)}
+            />
 
-          <AiSidebar
-            isOpen={isAiSidebarOpen}
-            onClose={() => setIsAiSidebarOpen(false)}
-          />
-        </>
+            <AiSidebar
+              isOpen={isAiSidebarOpen}
+              onClose={() => setIsAiSidebarOpen(false)}
+            />
+
+            <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(100,87,249,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(0,200,212,0.12),transparent_26%)]" />
+
+              <div className="relative min-h-[calc(100vh-4rem)]">
+                <div className="h-[calc(100vh-4rem)] w-full">
+                  <section className="h-full w-full overflow-hidden">
+                    <EditorRoomCanvas
+                      initialCanvasJsonPath={workspaceProject.canvasJsonPath ?? null}
+                      onSaveStatusChange={setCanvasSaveStatus}
+                      roomId={workspaceProject.id}
+                      saveRequestId={saveRequestId}
+                      templateImportRequest={templateImportRequest}
+                    />
+                  </section>
+                </div>
+              </div>
+            </div>
+          </RoomProvider>
+        </LiveblocksProvider>
       ) : null}
 
-      <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(100,87,249,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(0,200,212,0.12),transparent_26%)]" />
+      {!isProjectWorkspace ? (
+        <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(100,87,249,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(0,200,212,0.12),transparent_26%)]" />
 
-        <div className="relative min-h-[calc(100vh-4rem)]">
-          {isProjectWorkspace ? (
-            <div className="h-[calc(100vh-4rem)] w-full">
-              <section className="h-full w-full overflow-hidden">
-                <EditorRoomCanvas
-                  initialCanvasJsonPath={workspaceProject.canvasJsonPath ?? null}
-                  onSaveStatusChange={setCanvasSaveStatus}
-                  roomId={workspaceProject.id}
-                  saveRequestId={saveRequestId}
-                  templateImportRequest={templateImportRequest}
-                />
-              </section>
-            </div>
-          ) : (
+          <div className="relative min-h-[calc(100vh-4rem)]">
             <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
               <section className="flex w-full max-w-2xl flex-col items-center text-center">
                 <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -221,9 +239,9 @@ export function EditorWorkspaceShell({
                 </Button>
               </section>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <ProjectDialogs
         activeDialog={activeDialog}

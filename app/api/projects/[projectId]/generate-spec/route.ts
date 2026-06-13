@@ -5,7 +5,6 @@ import {
   getTriggerTaskHandleResponse,
 } from "@/lib/trigger/project-tasks"
 import { jsonError } from "@/lib/project-api"
-import type { generateSpecTask } from "@/trigger/generate-spec"
 
 interface GenerateSpecRouteContext {
   params: Promise<{
@@ -29,7 +28,7 @@ export async function POST(
   }
 
   try {
-    const handle = await tasks.trigger<typeof generateSpecTask>("generate-spec", {
+    const handle = await tasks.trigger("generate-spec", {
       canvasJsonPath: projectContext.context.project.canvasJsonPath,
       projectId,
       projectName: projectContext.context.project.name,

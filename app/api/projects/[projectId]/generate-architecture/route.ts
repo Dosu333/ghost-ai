@@ -6,7 +6,6 @@ import {
   parseArchitectureGenerationRequest,
 } from "@/lib/trigger/project-tasks"
 import { jsonError } from "@/lib/project-api"
-import type { generateArchitectureTask } from "@/trigger/generate-architecture"
 
 interface GenerateArchitectureRouteContext {
   params: Promise<{
@@ -40,16 +39,13 @@ export async function POST(
   }
 
   try {
-    const handle = await tasks.trigger<typeof generateArchitectureTask>(
-      "generate-architecture",
-      {
-        canvasJsonPath: projectContext.context.project.canvasJsonPath,
-        projectId,
-        projectName: projectContext.context.project.name,
-        prompt: bodyResult.prompt,
-        requestedByUserId: projectContext.context.userId,
-      }
-    )
+    const handle = await tasks.trigger("generate-architecture", {
+      canvasJsonPath: projectContext.context.project.canvasJsonPath,
+      projectId,
+      projectName: projectContext.context.project.name,
+      prompt: bodyResult.prompt,
+      requestedByUserId: projectContext.context.userId,
+    })
 
     return Response.json(getTriggerTaskHandleResponse(handle), {
       status: 202,

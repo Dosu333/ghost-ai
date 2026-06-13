@@ -3,8 +3,6 @@
 import { AlertTriangle, LoaderCircle } from "lucide-react"
 import {
   ClientSideSuspense,
-  LiveblocksProvider,
-  RoomProvider,
   useErrorListener,
 } from "@liveblocks/react/suspense"
 import type { ReactNode } from "react"
@@ -123,24 +121,14 @@ export function EditorRoomCanvas({
   templateImportRequest = null,
 }: EditorRoomCanvasProps) {
   return (
-    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
-      <RoomProvider
-        id={roomId}
-        initialPresence={{
-          cursor: null,
-          thinking: false,
-        }}
-      >
-        <CanvasConnectionGuard>
-          <EditorCanvas
-            initialCanvasJsonPath={initialCanvasJsonPath}
-            onSaveStatusChange={onSaveStatusChange}
-            projectId={roomId}
-            saveRequestId={saveRequestId}
-            templateImportRequest={templateImportRequest}
-          />
-        </CanvasConnectionGuard>
-      </RoomProvider>
-    </LiveblocksProvider>
+    <CanvasConnectionGuard>
+      <EditorCanvas
+        initialCanvasJsonPath={initialCanvasJsonPath}
+        onSaveStatusChange={onSaveStatusChange}
+        projectId={roomId}
+        saveRequestId={saveRequestId}
+        templateImportRequest={templateImportRequest}
+      />
+    </CanvasConnectionGuard>
   )
 }

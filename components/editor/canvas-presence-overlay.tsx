@@ -1,5 +1,6 @@
 "use client"
 
+import { LoaderCircle } from "lucide-react"
 import { UserButton, useUser } from "@clerk/nextjs"
 import type { ReactFlowInstance } from "@xyflow/react"
 import {
@@ -47,16 +48,27 @@ function CollaboratorAvatar({ connectionId }: { connectionId: number }) {
     getDisplayValue,
   )
   const avatar = useOther(connectionId, (other) => other.info.avatar)
+  const isThinking = useOther(connectionId, (other) => other.presence.thinking)
 
   return avatar ? (
-    <img
-      src={avatar}
-      alt={name}
-      className="size-9 rounded-xl border border-surface-border object-cover shadow-[0_0_0_2px_var(--bg-base)]"
-    />
+    <div className="relative">
+      <img
+        src={avatar}
+        alt={name}
+        className="size-9 rounded-xl border border-surface-border object-cover shadow-[0_0_0_2px_var(--bg-base)]"
+      />
+      {isThinking ? (
+        <span className="absolute -right-1 -top-1 size-3 rounded-full border border-[var(--bg-base)] bg-ai shadow-[0_0_10px_color-mix(in_srgb,var(--accent-ai)_48%,transparent)]" />
+      ) : null}
+    </div>
   ) : (
-    <div className="flex size-9 items-center justify-center rounded-xl border border-surface-border bg-elevated text-xs font-semibold text-copy-primary shadow-[0_0_0_2px_var(--bg-base)]">
-      {getInitials(name)}
+    <div className="relative">
+      <div className="flex size-9 items-center justify-center rounded-xl border border-surface-border bg-elevated text-xs font-semibold text-copy-primary shadow-[0_0_0_2px_var(--bg-base)]">
+        {getInitials(name)}
+      </div>
+      {isThinking ? (
+        <span className="absolute -right-1 -top-1 size-3 rounded-full border border-[var(--bg-base)] bg-ai shadow-[0_0_10px_color-mix(in_srgb,var(--accent-ai)_48%,transparent)]" />
+      ) : null}
     </div>
   )
 }
@@ -81,6 +93,7 @@ function PresenceCursor({
     connectionId,
     (other) => other.info.color || "var(--accent-primary)",
   )
+  const isThinking = useOther(connectionId, (other) => other.presence.thinking)
 
   if (cursor === null) {
     return null
@@ -124,13 +137,19 @@ function PresenceCursor({
           />
         </svg>
         <div
-          className="absolute left-4 top-4 max-w-40 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none shadow-lg"
+          className="absolute left-4 top-4 flex max-w-40 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none shadow-lg"
           style={{
             backgroundColor: color,
             color: "var(--bg-base)",
           }}
         >
           <span className="block truncate">{name}</span>
+          {isThinking ? (
+            <LoaderCircle
+              aria-label={`${name} is thinking`}
+              className="h-3 w-3 shrink-0 animate-spin"
+            />
+          ) : null}
         </div>
       </div>
     </div>

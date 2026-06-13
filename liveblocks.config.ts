@@ -26,7 +26,19 @@ declare global {
     };
 
     // Custom events, for useBroadcastEvent, useEventListener
-    RoomEvent: Record<string, never>;
+    RoomEvent:
+      | {
+          type: "ai-status"
+          eventId: string
+          feedId: "ai-status-feed"
+          data: {
+            runId: string
+            scope?: "design" | "spec"
+            status: "started" | "processing" | "complete" | "error"
+            text?: string
+            timestamp: string
+          }
+        };
     // Example has two events, using a union
     // | { type: "PLAY" }
     // | { type: "REACTION"; emoji: "🔥" };
