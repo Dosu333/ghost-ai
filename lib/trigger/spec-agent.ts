@@ -12,13 +12,13 @@ const canvasNodeSchema = z.object({
     label: z.string(),
     shape: z.string().trim().min(1),
   }),
-  height: z.number().finite().positive().optional(),
+  height: z.number().positive().optional(),
   id: z.string().trim().min(1),
   position: z.object({
-    x: z.number().finite(),
-    y: z.number().finite(),
+    x: z.number(),
+    y: z.number(),
   }),
-  width: z.number().finite().positive().optional(),
+  width: z.number().positive().optional(),
 })
 
 const canvasEdgeSchema = z.object({
@@ -56,8 +56,10 @@ export type GenerateSpecTaskPayload = z.infer<
 export interface GenerateSpecTaskResult {
   generatedAt: string
   markdown: string
+  filePath: string
   projectId: string
   roomId: string
+  specId: string
 }
 
 export interface SpecAgentContext {

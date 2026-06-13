@@ -7,6 +7,7 @@ interface EditorDialogFrameProps extends React.ComponentProps<"section"> {
   description?: string
   footer?: React.ReactNode
   children?: React.ReactNode
+  contentClassName?: string
 }
 
 export function EditorDialogFrame({
@@ -14,6 +15,7 @@ export function EditorDialogFrame({
   description,
   footer,
   children,
+  contentClassName,
   className,
   ...props
 }: EditorDialogFrameProps) {
@@ -34,7 +36,9 @@ export function EditorDialogFrame({
         ) : null}
       </div>
 
-      {children ? <div className="px-6 py-5">{children}</div> : null}
+      {children ? (
+        <div className={cn("px-6 py-5", contentClassName)}>{children}</div>
+      ) : null}
 
       {footer ? (
         <div className="flex flex-col-reverse gap-3 border-t border-surface-border bg-surface/80 px-6 py-4 sm:flex-row sm:justify-end">

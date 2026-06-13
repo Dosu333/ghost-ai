@@ -6,6 +6,7 @@ import {
   publishSpecAgentStatus,
   setDesignAgentPresence,
 } from "@/lib/design-agent-canvas"
+import { persistGeneratedSpec } from "@/lib/spec-persistence"
 import {
   generateSpecTaskPayloadSchema,
   type GenerateSpecTaskPayload,
@@ -196,8 +197,25 @@ export const generateSpecTask = schemaTask({
       const markdown = await generateMarkdownSpec(payload)
 
       metadata
-        .set("status", "complete")
+        .set("status", "persisting")
         .set("markdownLength", markdown.length)
+
+      await publishSpecAgentStatus({
+        message: "Ghost AI is saving the generated Markdown spec.",
+        roomId: payload.roomId,
+        runId,
+        status: "processing",
+      })
+
+      const persistedSpec = await persistGeneratedSpec({
+        markdown,
+        projectId: payload.projectId,
+      })
+
+      metadata
+        .set("status", "complete")
+        .set("specFilePath", persistedSpec.filePath)
+        .set("specId", persistedSpec.id)
 
       await publishSpecAgentStatus({
         message: "Ghost AI finished generating a Markdown technical spec draft.",
@@ -207,10 +225,12 @@ export const generateSpecTask = schemaTask({
       })
 
       return {
+        filePath: persistedSpec.filePath,
         generatedAt: new Date().toISOString(),
         markdown,
         projectId: payload.projectId,
         roomId: payload.roomId,
+        specId: persistedSpec.id,
       }
     } catch (error) {
       logger.error("Spec generation task failed.", {

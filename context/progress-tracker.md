@@ -8,10 +8,27 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Connect the Specs sidebar controls to the backend spec-generation workflow and realtime run tracking in a later frontend unit.
+- Refine post-generation Specs UX and broader editor follow-ups in later frontend units.
 
 ## Completed
 
+- Spec downloads no longer force a zero-byte `content-length` header from Vercel Blob metadata, so Markdown attachments now stream the same persisted content that already appears in the preview modal.
+- The spec preview modal now uses a bounded flex-column layout, so long Markdown specs scroll inside the modal body while the header and footer remain accessible.
+- The Specs tab load effect no longer re-enters on its own state updates; opening the tab now fetches project specs once per open-state or room change instead of hitting a React maximum update depth loop.
+- The Specs tab `Generate Spec` control is now wired to `POST /api/ai/spec` and `POST /api/ai/spec/token`, building its payload from the current Liveblocks canvas snapshot, validated AI chat history, and active room ID.
+- Spec generation now tracks its own Trigger.dev realtime run state in the AI sidebar, showing in-tab progress/error messaging without colliding with the separate design-generation flow.
+- Successful spec runs now refresh the persisted project spec list automatically when generation completes, so newly saved specs appear in the sidebar without a manual reload.
+- Specs generation frontend verification completed with `npx tsc --noEmit`.
+- The Specs tab now loads persisted project spec metadata from authenticated project-scoped endpoints, rendering a compact scrollable list with created timestamps and download actions inside the existing AI sidebar.
+- The editor now includes authenticated `GET /api/projects/[projectId]/specs` and `GET /api/projects/[projectId]/specs/[specId]` routes so the frontend can fetch spec metadata and preview Markdown content without direct Blob access.
+- Selecting a spec now opens a keyboard-accessible preview modal that renders the saved Markdown content, includes close/download actions, and clears preview content again when the modal closes.
+- Spec preview rendering now uses a local safe Markdown-to-HTML helper that escapes raw HTML before formatting common Markdown structures for the sidebar modal.
+- Specs tab UI integration verification completed with `npx tsc --noEmit`; `npm run build` is still blocked in the sandbox only by the existing `next/font/google` Geist and Geist Mono fetch requirement.
+- `ProjectSpec` metadata storage is now implemented in Prisma with a dedicated model, project relation, and migration for persisted generated spec records.
+- Generated Markdown specs are now persisted to private Vercel Blob storage at `specs/{projectId}/{specId}.md`, and the saved Blob URL is stored in `ProjectSpec.filePath` instead of Prisma storing spec content directly.
+- The Trigger.dev `generate-spec` task now persists its generated Markdown artifact after generation, records `specId` and `specFilePath` in run metadata, and returns the persisted spec reference alongside the Markdown output.
+- `GET /api/projects/[projectId]/specs/[specId]/download` is now implemented with authentication, project access enforcement, project/spec ownership validation, private Blob retrieval, and Markdown attachment download headers.
+- Spec persistence and download verification completed with `npx prisma validate`, `npx prisma generate`, `npx tsc --noEmit`, and `npm run build`.
 - `POST /api/ai/spec` is now implemented for authenticated spec-generation enqueueing, validating `roomId`, `chatHistory`, `nodes`, and `edges`, resolving project access from `roomId`, triggering the Trigger.dev `generate-spec` task, and persisting a `TaskRun` ownership record before returning the `runId`.
 - `POST /api/ai/spec/token` now verifies the authenticated user owns the requested `TaskRun` before issuing a 1-hour Trigger.dev public token scoped to that run.
 - `trigger/generate-spec.ts` now runs the backend spec-generation workflow through Trigger.dev with Zod-validated payloads, Gemini Markdown generation, Trigger metadata updates, shared AI realtime status publishing, and typed Markdown task output.
@@ -155,7 +172,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Wire the Specs tab UI to `POST /api/ai/spec` and `POST /api/ai/spec/token`, then subscribe to realtime run state and render generated Markdown in the sidebar.
+- Verify the end-to-end spec generation UX against a live Trigger.dev worker and polish any remaining empty-state or completion-feedback gaps.
 
 ## Open Questions
 
@@ -224,3 +241,10 @@ Update this file whenever the current phase, active feature, or implementation s
 - The design-agent frontend wiring unit is now complete; the next active unit is `27-spec-generation-flow.md`, which intentionally stays backend-only and leaves the Specs tab UI wiring for a later step.
 - The sidebar chat feed unit is now complete: `npx tsc --noEmit` passes, and `npm run build` is blocked only by the existing `next/font/google` Geist and Geist Mono fetch failure in the sandbox.
 - The `27-spec-generation-flow.md` unit is now complete: `npx tsc --noEmit` passes, and `npm run build` is still blocked only by the existing sandboxed `next/font/google` Geist and Geist Mono fetch failure.
+- The `28-spec-persistence-download.md` unit is now complete, including Prisma metadata storage, private Vercel Blob uploads for generated specs, and a protected Markdown download route.
+- Production build verification for the spec persistence unit again required temporary network access so the existing `next/font/google` Geist and Geist Mono fetches could complete during `npm run build`.
+- The pending `20260613113000_add_project_spec` migration has now been applied to the configured PostgreSQL database, so Specs tab metadata queries no longer fail on a missing `ProjectSpec` table at runtime.
+- The `29-spec-ui-integration.md` unit is now complete; the Specs tab lists persisted spec metadata, previews Markdown through authenticated content fetches, and triggers downloads through the protected attachment route.
+- This UI unit needed two small supporting project-spec API routes for metadata and preview content because the secure download route alone was not enough for a list-plus-modal client flow.
+- `npx tsc --noEmit` passes for the Specs tab integration, and `npm run build` again stops only on the known sandboxed `next/font/google` Geist and Geist Mono fetch failure.
+- The Specs generation follow-up is now wired on the frontend: the sidebar reads the current collaborative `flow` snapshot from Liveblocks storage, posts it to the spec-generation API, subscribes to the resulting Trigger.dev run, and refreshes the spec list after successful completion.
