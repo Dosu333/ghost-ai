@@ -8,10 +8,14 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement the design-agent frontend wiring in the AI sidebar: prompt submission, realtime Trigger.dev run tracking, and active-run status display.
+- Connect the Specs sidebar controls to the backend spec-generation workflow and realtime run tracking in a later frontend unit.
 
 ## Completed
 
+- `POST /api/ai/spec` is now implemented for authenticated spec-generation enqueueing, validating `roomId`, `chatHistory`, `nodes`, and `edges`, resolving project access from `roomId`, triggering the Trigger.dev `generate-spec` task, and persisting a `TaskRun` ownership record before returning the `runId`.
+- `POST /api/ai/spec/token` now verifies the authenticated user owns the requested `TaskRun` before issuing a 1-hour Trigger.dev public token scoped to that run.
+- `trigger/generate-spec.ts` now runs the backend spec-generation workflow through Trigger.dev with Zod-validated payloads, Gemini Markdown generation, Trigger metadata updates, shared AI realtime status publishing, and typed Markdown task output.
+- Shared AI status publishing now supports both `design` and `spec` scopes through the existing Liveblocks `ai-status-feed`, so spec runs can reuse the same realtime channel without duplicating feed logic.
 - `POST /api/ai/design` now returns both `runId` and a Trigger.dev `publicToken`, so the AI sidebar can subscribe to realtime run updates immediately without depending on a second token request.
 - Design-agent enqueueing now treats Trigger.dev task startup, realtime token creation, and `TaskRun` persistence as separate steps; a missing `TaskRun` table no longer causes successful runs to be reported back to the client as failed triggers.
 - The AI sidebar no longer eagerly recreates `ai-status-feed` and `ai-chat` on mount; feed creation now stays lazy/write-scoped, fixing the browser-side unhandled `LiveblocksError: Feed ... already exists` promise rejections.
@@ -147,11 +151,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## In Progress
 
-- `26-design-agent-frontend.md` is now the active unit, focused on connecting the existing Liveblocks `ai-chat` feed to the design-agent enqueue flow and Trigger.dev realtime run updates without changing backend task logic.
+- None currently.
 
 ## Next Up
 
-- Connect the Specs sidebar controls to the backend spec-generation workflow in a later unit after the design-agent frontend wiring is complete.
+- Wire the Specs tab UI to `POST /api/ai/spec` and `POST /api/ai/spec/token`, then subscribe to realtime run state and render generated Markdown in the sidebar.
 
 ## Open Questions
 
@@ -217,5 +221,6 @@ Update this file whenever the current phase, active feature, or implementation s
 - The design-agent logic unit is now implemented end to end for project workspaces, including Gemini-backed canvas mutations, shared AI room events, AI presence updates, and AI sidebar prompt submission.
 - The Gemini provider setup now matches the Trigger worker runtime more closely by avoiding implicit AI SDK env lookup and supporting both documented API key env names directly in code.
 - Production build verification is still blocked in the sandbox by the existing `next/font/google` Geist and Geist Mono fetch requirement; `npx tsc --noEmit` passes locally for the full design-agent logic change set.
-- The active unit is `25-sidebar-chat-feed.md`, which intentionally scopes the AI sidebar input to collaborative room chat only and keeps it separate from backend AI task triggering.
+- The design-agent frontend wiring unit is now complete; the next active unit is `27-spec-generation-flow.md`, which intentionally stays backend-only and leaves the Specs tab UI wiring for a later step.
 - The sidebar chat feed unit is now complete: `npx tsc --noEmit` passes, and `npm run build` is blocked only by the existing `next/font/google` Geist and Geist Mono fetch failure in the sandbox.
+- The `27-spec-generation-flow.md` unit is now complete: `npx tsc --noEmit` passes, and `npm run build` is still blocked only by the existing sandboxed `next/font/google` Geist and Geist Mono fetch failure.

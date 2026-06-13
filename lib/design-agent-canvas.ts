@@ -866,24 +866,22 @@ export async function persistRoomCanvasSnapshot(
   await updateRoomStorageSnapshot(roomId, snapshot)
 }
 
-export async function publishDesignAgentStatus(input: {
+export async function publishAiStatus(input: {
   message: string
-  prompt?: string
   roomId: string
   runId: string
+  scope: AiStatusFeedMessage["scope"]
   status: AiStatusFeedMessage["status"]
 }) {
   const liveblocks = getLiveblocks()
   const timestamp = new Date().toISOString()
   const data = {
     runId: input.runId,
-    scope: "design" as const,
+    scope: input.scope,
     status: input.status,
     text: input.message,
     timestamp,
   }
-
-  void input.prompt
 
   await liveblocks
     .createFeed({
@@ -903,6 +901,39 @@ export async function publishDesignAgentStatus(input: {
     eventId: `${input.runId}:${input.status}:${Date.now()}`,
     feedId: AI_STATUS_FEED_ID,
     type: "ai-status",
+  })
+}
+
+export async function publishDesignAgentStatus(input: {
+  message: string
+  prompt?: string
+  roomId: string
+  runId: string
+  status: AiStatusFeedMessage["status"]
+}) {
+  void input.prompt
+
+  return publishAiStatus({
+    message: input.message,
+    roomId: input.roomId,
+    runId: input.runId,
+    scope: "design",
+    status: input.status,
+  })
+}
+
+export async function publishSpecAgentStatus(input: {
+  message: string
+  roomId: string
+  runId: string
+  status: AiStatusFeedMessage["status"]
+}) {
+  return publishAiStatus({
+    message: input.message,
+    roomId: input.roomId,
+    runId: input.runId,
+    scope: "spec",
+    status: input.status,
   })
 }
 
